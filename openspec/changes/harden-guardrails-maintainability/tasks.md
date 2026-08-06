@@ -65,7 +65,7 @@
 - [ ] 7.7 Implement human acceptance through the portable protocol by invoking the core acceptance API and binding actor, result digest, evidence digest, and controlling artifact state.
 - [ ] 7.8 Make every recording operation atomic and idempotent with one-document JSON output, actionable conflict diagnostics, and no requirement to edit generated JSON directly.
 - [ ] 7.9 Update `run`, `check`, and `run-status` workflows to drive Tier 0 exclusively through the supported commands and to update OpenSpec task checkboxes as the planning authority.
-- [ ] 7.10 Expose `--repair` only when a repair adapter is available; otherwise report bounded repair instructions without claiming a repair was performed.
+- [x] 7.10 Expose `--repair` only when a repair adapter is available; otherwise report bounded repair instructions without claiming a repair was performed.
 
 ## 8. Keep Optional Tiers Honest and Non-Mutating
 
