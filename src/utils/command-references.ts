@@ -37,10 +37,12 @@ import {
  */
 export function transformCommandInvocations(
   text: string,
-  invocation: CommandInvocation
+  invocation: CommandInvocation,
+  additionalCommandIds: readonly string[] = []
 ): string {
+  const additional = new Set(additionalCommandIds);
   return text.replace(/\/opsx:([a-z-]+)/g, (match, commandId: string) =>
-    commandId in COMMAND_TO_SKILL_NAME
+    commandId in COMMAND_TO_SKILL_NAME || additional.has(commandId)
       ? formatCommandInvocation(invocation, commandId)
       : match
   );
@@ -77,9 +79,13 @@ const SKILL_INVOCATION_PREFIX: Record<string, string> = {
   codex: '$',
 };
 
-function replaceCommandsWithSkillReferences(text: string, prefix: string): string {
+function replaceCommandsWithSkillReferences(
+  text: string,
+  prefix: string,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
+): string {
   return text.replace(/\/opsx:([a-z-]+)/g, (match, commandId: string) => {
-    const skillName = COMMAND_TO_SKILL_NAME[commandId];
+    const skillName = COMMAND_TO_SKILL_NAME[commandId] ?? additionalSkillNames[commandId];
     return skillName === undefined ? match : `${prefix}${skillName}`;
   });
 }
@@ -113,12 +119,18 @@ export function transformToSkillReferences(text: string): string {
  * @param toolId - The AI tool identifier (e.g. 'kimi', 'vibe')
  * @returns A transformer converting `/opsx:*` references to skill invocations
  */
-export function getSkillReferenceTransformer(toolId: string): (text: string) => string {
+export function getSkillReferenceTransformer(
+  toolId: string,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
+): (text: string) => string {
   const prefix = SKILL_INVOCATION_PREFIX[toolId];
   if (prefix === undefined) {
-    return transformToSkillReferences;
+    if (Object.keys(additionalSkillNames).length === 0) {
+      return transformToSkillReferences;
+    }
+    return (text: string) => replaceCommandsWithSkillReferences(text, '/', additionalSkillNames);
   }
-  return (text: string) => replaceCommandsWithSkillReferences(text, prefix);
+  return (text: string) => replaceCommandsWithSkillReferences(text, prefix, additionalSkillNames);
 }
 
 /**
@@ -161,16 +173,18 @@ export function getTransformerForTool(
   toolId: string,
   delivery: 'both' | 'skills' | 'commands',
   capability: CommandSurfaceCapability,
-  invocation: CommandInvocation | undefined
+  invocation: CommandInvocation | undefined,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
 ): ((text: string) => string) | undefined {
   if (delivery === 'skills' || capability !== 'adapter-backed') {
-    return getSkillReferenceTransformer(toolId);
+    return getSkillReferenceTransformer(toolId, additionalSkillNames);
   }
   if (toolId === 'devin' && delivery === 'both') {
-    return getSkillReferenceTransformer(toolId);
+    return getSkillReferenceTransformer(toolId, additionalSkillNames);
   }
   if (invocation !== undefined && needsInvocationRewrite(invocation)) {
-    return (text: string) => transformCommandInvocations(text, invocation);
+    return (text: string) =>
+      transformCommandInvocations(text, invocation, Object.keys(additionalSkillNames));
   }
   return undefined;
 }

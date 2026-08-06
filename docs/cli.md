@@ -216,6 +216,49 @@ elsewhere.
 
 ---
 
+## Project extensions
+
+Extensions add workflows, schemas, commands, or archive gates to one OpenSpec
+project. Run lifecycle commands anywhere beneath the nearest project root:
+
+```bash
+openspec extension install <package>
+openspec extension link <path>
+openspec extension enable <id>
+openspec extension disable <id>
+openspec extension list
+openspec extension doctor [id]
+```
+
+`install` resolves a registry package, pins its exact version and integrity, and
+enables it. `link` records a canonical development directory, using a
+project-relative path when that directory is inside the project. Enable and
+disable change whether the extension contributes new surfaces; disabling an
+extension does not remove archive-gate obligations already attached to active
+changes.
+
+OpenSpec owns `openspec/extensions.lock.yaml`. Commit it so every contributor
+resolves the same extension versions and enablement state; do not hand-edit it.
+Registry packages are acquired without install scripts and cached by integrity
+under OpenSpec's per-user data directory, so application projects do not need a
+Node package manager or gain extension dependencies in their own package files.
+
+Installing or enabling an extension is still a trust decision. A v1 extension's
+declarative files are inspected before use, but its gate modules execute with the
+same operating-system permissions as the OpenSpec process. OpenSpec verifies
+package identity, compatibility, referenced-file containment, and contribution
+conflicts; it is not a JavaScript sandbox.
+
+Lifecycle mutations write the lockfile before reconciling generated workflow
+files. If generation then fails, the selected extension remains recorded and
+`openspec extension doctor` reports reconciliation drift. Fix or restore the
+package/link and retry `enable`, `disable`, or `openspec update`. A broken enabled
+extension can be disabled by ID; core commands that do not require its missing
+contribution remain usable. Do not delete change-local `.openspec-gates.json`
+records as a recovery step—those records preserve active archive obligations.
+
+---
+
 ## Stores (standalone OpenSpec repos)
 
 > **Beta.** Stores and the features built on them (references, working context, worksets) are new; command names, flags, file formats, and JSON output may change shape between releases. For the problem-first walkthrough, see the [stores guide](stores-beta/user-guide.md).
@@ -631,6 +674,8 @@ openspec archive [change-name] [options]
 | `-y, --yes` | Skip confirmation prompts. Required when nothing can answer them — an AI agent, a CI job, or any run with stdin closed |
 | `--skip-specs` | Skip spec updates for one archive run. A change that permanently has no spec deltas should declare `skip_specs: true` in its `.openspec.yaml` instead — it archives with no flag |
 | `--no-validate` | Skip validation (requires confirmation) |
+| `--override-gate <id>` | Override one currently blocking required extension gate. Repeat for multiple gates; requires `--reason` |
+| `--reason <text>` | Non-empty audit reason recorded with every gate named by `--override-gate` |
 
 **Examples:**
 
@@ -646,14 +691,18 @@ openspec archive add-dark-mode --yes
 
 # Archive a tooling change that doesn't affect specs
 openspec archive update-ci-config --skip-specs
+
+# Deliberately override a blocking extension gate with an audit trail
+openspec archive urgent-fix --override-gate assurance --reason "Approved emergency release"
 ```
 
 **What it does:**
 
-1. Validates the change (unless `--no-validate`)
-2. Prompts for confirmation (unless `--yes`)
-3. Merges delta specs into `openspec/specs/`
-4. Moves change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/`
+1. Evaluates required extension gates before any validation, prompt, or write
+2. Validates the change (unless `--no-validate`)
+3. Prompts for confirmation (unless `--yes`)
+4. Merges delta specs into `openspec/specs/`
+5. Moves change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/`
 
 **Without a terminal:** an AI agent, a CI job, or any run with stdin closed cannot
 answer step 2, so archive stops before touching anything, exits 1, and names the

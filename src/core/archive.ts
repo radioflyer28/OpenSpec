@@ -22,6 +22,16 @@ import {
 import { discoverSpecFiles, hasAnyFileUnder } from '../utils/spec-discovery.js';
 import { readSkipSpecsMarker } from '../utils/change-metadata.js';
 import { isNonInteractivePromptError } from '../utils/interactive.js';
+import { createRequire } from 'node:module';
+import {
+  DEFAULT_EXTENSION_HOST_CAPABILITIES,
+  evaluateRequiredGates,
+  recordGateOverride,
+  type GateResultV1,
+} from './extensions/index.js';
+
+const require = createRequire(import.meta.url);
+const { version: OPENSPEC_VERSION } = require('../../package.json') as { version: string };
 
 function isMissingPathError(error: unknown): boolean {
   return (
@@ -60,6 +70,8 @@ export interface ArchiveOptions {
   json?: boolean;
   store?: string;
   storePath?: string;
+  overrideGate?: string | string[];
+  reason?: string;
 }
 
 interface ArchiveDiagnostic {
@@ -67,6 +79,11 @@ interface ArchiveDiagnostic {
   code: string;
   message: string;
   fix?: string;
+  gateId?: string;
+  gateStatus?: GateResultV1['status'];
+  evidence?: string[];
+  remediation?: string[];
+  blockingGates?: string[];
 }
 
 interface ArchiveResult {
@@ -77,6 +94,7 @@ interface ArchiveResult {
   totals?: { added: number; modified: number; removed: number; renamed: number };
   /** Non-blocking spec-merge warnings (e.g. a REMOVED requirement that was already gone). */
   warnings?: string[];
+  gates?: { warnings: string[]; overridden: string[] };
 }
 
 /**
@@ -98,6 +116,21 @@ class ArchiveBlockedError extends Error {
       message,
       ...(fix ? { fix } : {}),
     };
+  }
+}
+
+class ArchiveGateBlockedError extends ArchiveBlockedError {
+  constructor(
+    code: 'archive_gate_blocked' | 'archive_gate_override_invalid',
+    message: string,
+    details: Pick<
+      ArchiveDiagnostic,
+      'gateId' | 'gateStatus' | 'evidence' | 'remediation' | 'blockingGates'
+    >,
+    fix?: string
+  ) {
+    super(code, message, fix);
+    Object.assign(this.diagnostic, details);
   }
 }
 
@@ -341,6 +374,82 @@ export class ArchiveCommand {
           ? `Change '${changeName}' not found. Available changes: ${available.join(', ')}`
           : `Change '${changeName}' not found. No active changes exist in this root.`
       );
+    }
+
+    const overrideIds = options.overrideGate === undefined
+      ? []
+      : Array.isArray(options.overrideGate)
+        ? options.overrideGate
+        : [options.overrideGate];
+    const hasOverride = overrideIds.length > 0;
+    const reasonProvided = options.reason !== undefined;
+    const hasValidReason = typeof options.reason === 'string' && options.reason.trim().length > 0;
+    if (hasOverride !== reasonProvided || (hasOverride && !hasValidReason)) {
+      throw new ArchiveGateBlockedError(
+        'archive_gate_override_invalid',
+        'Gate overrides require both --override-gate <id> and --reason <text>.',
+        { blockingGates: [] },
+        'Pass both options together, or remove both.'
+      );
+    }
+
+    // Required gates run before validation, spec preparation, prompts, or any
+    // filesystem mutation. The change-local record remains authoritative even
+    // when its originating extension is later disabled or unavailable.
+    const gateEvaluation = await evaluateRequiredGates({
+      projectRoot: root.path,
+      changeName,
+      coreVersion: OPENSPEC_VERSION,
+      hostCapabilities: DEFAULT_EXTENSION_HOST_CAPABILITIES,
+    });
+    const blockingIds = gateEvaluation.blocking.map((result) => result.gateId);
+    const uniqueOverrideIds = [...new Set(overrideIds)];
+    if (hasOverride) {
+      const unknown = uniqueOverrideIds.filter((id) => !blockingIds.includes(id));
+      if (unknown.length > 0) {
+        throw new ArchiveGateBlockedError(
+          'archive_gate_override_invalid',
+          `Gate override targets are not currently blocking: ${unknown.join(', ')}. ` +
+            `Currently blocking gates: ${blockingIds.join(', ') || 'none'}.`,
+          { blockingGates: blockingIds },
+          'Override only a currently blocking required gate.'
+        );
+      }
+      const actor = process.env.OPENSPEC_ACTOR ?? process.env.GIT_AUTHOR_NAME ??
+        process.env.USER ?? process.env.USERNAME;
+      for (const gateId of uniqueOverrideIds) {
+        await recordGateOverride(changeDir, gateId, {
+          reason: options.reason!.trim(),
+          ...(actor ? { actor } : {}),
+        });
+      }
+    }
+    const remainingBlockers = gateEvaluation.blocking.filter(
+      (result) => !uniqueOverrideIds.includes(result.gateId)
+    );
+    if (remainingBlockers.length > 0) {
+      const first = remainingBlockers[0];
+      throw new ArchiveGateBlockedError(
+        'archive_gate_blocked',
+        `Archive blocked by required gate${remainingBlockers.length === 1 ? '' : 's'}: ` +
+          remainingBlockers.map((result) => `${result.gateId} (${result.status}): ${result.summary}`).join('; '),
+        {
+          gateId: first.gateId,
+          gateStatus: first.status,
+          evidence: first.evidence,
+          remediation: first.remediation,
+          blockingGates: remainingBlockers.map((result) => result.gateId),
+        },
+        `Restore or satisfy the gate, run openspec extension doctor, or rerun with --override-gate ${first.gateId} --reason <text>.`
+      );
+    }
+    if (!json) {
+      for (const warning of gateEvaluation.warnings) {
+        console.log(`Gate warning ${warning.gateId}: ${warning.summary}`);
+      }
+      for (const gateId of uniqueOverrideIds) {
+        console.log(`Gate override recorded for ${gateId}: ${options.reason!.trim()}`);
+      }
     }
 
     const skipValidation = options.validate === false || options.noValidate === true;
@@ -730,6 +839,14 @@ export class ArchiveCommand {
       specsUpdated,
       ...(totals ? { totals } : {}),
       ...(specWarnings.length > 0 ? { warnings: specWarnings } : {}),
+      ...(gateEvaluation.warnings.length > 0 || uniqueOverrideIds.length > 0
+        ? {
+            gates: {
+              warnings: gateEvaluation.warnings.map((result) => result.gateId),
+              overridden: uniqueOverrideIds,
+            },
+          }
+        : {}),
     };
   }
 

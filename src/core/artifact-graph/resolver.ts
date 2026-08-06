@@ -4,6 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { getGlobalDataDir } from '../global-config.js';
 import { parseSchema, SchemaValidationError } from './schema.js';
 import type { SchemaYaml } from './types.js';
+import {
+  getExtensionSchemaDir,
+  listExtensionSchemaNames,
+} from '../extensions/schema-index.js';
 
 /**
  * Error thrown when loading a schema fails.
@@ -99,6 +103,9 @@ export function getSchemaDir(
     if (fs.existsSync(projectSchemaPath)) {
       return projectDir;
     }
+
+    const extensionDir = getExtensionSchemaDir(projectRoot, name);
+    if (extensionDir) return extensionDir;
   }
 
   // 2. Check user override directory
@@ -186,7 +193,7 @@ export function resolveSchema(name: string, projectRoot?: string): SchemaYaml {
  *
  * @param projectRoot - Optional project root directory for project-local schema resolution
  */
-export function listSchemas(projectRoot?: string): string[] {
+export function listSchemasWithoutExtensions(projectRoot?: string): string[] {
   const schemas = new Set<string>();
 
   // Add package built-in schemas
@@ -233,6 +240,14 @@ export function listSchemas(projectRoot?: string): string[] {
   return Array.from(schemas).sort();
 }
 
+export function listSchemas(projectRoot?: string): string[] {
+  const schemas = new Set(listSchemasWithoutExtensions(projectRoot));
+  if (projectRoot) {
+    for (const name of listExtensionSchemaNames(projectRoot)) schemas.add(name);
+  }
+  return Array.from(schemas).sort();
+}
+
 /**
  * Schema info with metadata (name, description, artifacts).
  */
@@ -240,7 +255,7 @@ export interface SchemaInfo {
   name: string;
   description: string;
   artifacts: string[];
-  source: 'project' | 'user' | 'package';
+  source: 'project' | 'extension' | 'user' | 'package';
 }
 
 /**
@@ -275,6 +290,24 @@ export function listSchemasWithInfo(projectRoot?: string): SchemaInfo[] {
             }
           }
         }
+      }
+    }
+
+    for (const name of listExtensionSchemaNames(projectRoot)) {
+      if (seenNames.has(name)) continue;
+      const extensionDir = getExtensionSchemaDir(projectRoot, name);
+      if (!extensionDir) continue;
+      try {
+        const schema = parseSchema(fs.readFileSync(path.join(extensionDir, 'schema.yaml'), 'utf-8'));
+        schemas.push({
+          name,
+          description: schema.description || '',
+          artifacts: schema.artifacts.map((artifact) => artifact.id),
+          source: 'extension',
+        });
+        seenNames.add(name);
+      } catch {
+        // Skip invalid generated extension schemas.
       }
     }
   }

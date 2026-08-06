@@ -16,3 +16,4 @@ export * from './references.js';
 export * from './store/index.js';
 export * from './planning-home.js';
 export * from './openspec-root.js';
+export * from './extensions/index.js';

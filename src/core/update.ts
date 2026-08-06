@@ -67,6 +67,7 @@ import {
   shouldReconcileCommandFilesForTool,
   shouldRemoveSkillsForTool,
 } from './command-surface.js';
+import { reconcileProjectExtensions } from './extensions/workflows.js';
 
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
@@ -163,6 +164,14 @@ export class UpdateCommand {
 
     // 5. Find configured tools
     const configuredTools = getConfiguredToolsForProfileSync(resolvedProjectPath);
+
+    // Extension workflows use the same selected tools and delivery mode as
+    // built-ins. Reconcile even when no built-in refresh is needed so a
+    // lifecycle or lockfile change cannot remain silently stale.
+    await reconcileProjectExtensions(resolvedProjectPath, OPENSPEC_VERSION, {
+      configuredTools: [...new Set([...configuredTools, ...newlyConfiguredTools])],
+      delivery,
+    });
 
     if (configuredTools.length === 0 && newlyConfiguredTools.length === 0) {
       if (deferredGlobalCleanup) {

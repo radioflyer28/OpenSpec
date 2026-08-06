@@ -1,0 +1,8 @@
+name: fixture-schema
+version: 1
+artifacts:
+  - id: brief
+    generates: brief.md
+    description: Fixture brief
+    template: brief.md
+    requires: []
