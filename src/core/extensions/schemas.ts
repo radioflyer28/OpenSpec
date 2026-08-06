@@ -59,23 +59,6 @@ export const WorkflowContributionV1Schema = z
   })
   .strict();
 
-export const SchemaContributionV1Schema = z
-  .object({
-    id: KebabIdSchema('schema id'),
-    path: RelativeEntrySchema,
-  })
-  .strict();
-
-export const CommandContributionV1Schema = z
-  .object({
-    id: KebabIdSchema('command id'),
-    name: z.string().min(1),
-    description: z.string().min(1),
-    entry: RelativeEntrySchema,
-    requiredHostCapabilities: z.array(HostCapabilityV1Schema).default([]),
-  })
-  .strict();
-
 export const GateContributionV1Schema = z
   .object({
     id: z
@@ -92,13 +75,11 @@ export const GateContributionV1Schema = z
 const ContributionsV1Schema = z
   .object({
     workflows: z.array(WorkflowContributionV1Schema).default([]),
-    schemas: z.array(SchemaContributionV1Schema).default([]),
-    commands: z.array(CommandContributionV1Schema).default([]),
     gates: z.array(GateContributionV1Schema).default([]),
   })
   .strict()
   .superRefine((contributions, ctx) => {
-    for (const kind of ['workflows', 'schemas', 'commands', 'gates'] as const) {
+    for (const kind of ['workflows', 'gates'] as const) {
       const seen = new Set<string>();
       for (const [index, contribution] of contributions[kind].entries()) {
         if (seen.has(contribution.id)) {

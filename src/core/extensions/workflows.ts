@@ -23,13 +23,9 @@ import type { ExtensionReconcileContext, ExtensionReconcileResult } from './life
 import { resolveContainedExtensionPath } from './paths.js';
 import type { ExtensionRegistrySnapshot } from './registry.js';
 import {
-  extensionLockDigest,
   readExtensionReconciliationRecord,
   type ExtensionGeneratedArtifactV1,
-  writeExtensionReconciliationRecord,
 } from './reconciliation.js';
-import { readExtensionLockfile } from './lockfile.js';
-import { DEFAULT_EXTENSION_HOST_CAPABILITIES } from './lifecycle.js';
 import type { WorkflowContributionV1 } from './types.js';
 
 export interface NormalizedExtensionWorkflow {
@@ -244,18 +240,14 @@ export async function reconcileExtensionWorkflows(
 ): Promise<ExtensionReconcileResult> {
   const { buildExtensionRegistrySnapshot } = await import('./registry.js');
   const { ALL_WORKFLOWS } = await import('../profiles.js');
-  const { listSchemasWithoutExtensions } = await import('../artifact-graph/resolver.js');
   const snapshot = await buildExtensionRegistrySnapshot({
     projectRoot: context.projectRoot,
     coreVersion: context.coreVersion,
     hostCapabilities: context.hostCapabilities,
     builtinIds: {
       workflows: ALL_WORKFLOWS,
-      schemas: listSchemasWithoutExtensions(context.projectRoot),
     },
   });
-  const { materializeExtensionSchemas } = await import('./schemas-contribution.js');
-  await materializeExtensionSchemas(snapshot, context.projectRoot);
   const workflows = await normalizeExtensionWorkflows(snapshot);
   const delivery = options.delivery ?? getGlobalConfig().delivery ?? 'both';
   const configuredTools = options.configuredTools ?? getConfiguredToolsForProfileSync(context.projectRoot);
@@ -321,46 +313,4 @@ export async function reconcileExtensionWorkflows(
   }
 
   return { artifacts, diagnostics };
-}
-
-export async function reconcileProjectExtensions(
-  projectRoot: string,
-  coreVersion: string,
-  options: ReconcileExtensionWorkflowOptions = {}
-): Promise<ExtensionReconcileResult | undefined> {
-  const lockfile = await readExtensionLockfile(projectRoot);
-  const prior = await readExtensionReconciliationRecord(projectRoot);
-  if (Object.keys(lockfile.extensions).length === 0 && !prior) return undefined;
-  const lockDigest = extensionLockDigest(lockfile);
-  try {
-    const result = await reconcileExtensionWorkflows(
-      {
-        projectRoot,
-        coreVersion,
-        hostCapabilities: DEFAULT_EXTENSION_HOST_CAPABILITIES,
-        lockfile,
-      },
-      options
-    );
-    await writeExtensionReconciliationRecord(projectRoot, {
-      version: 1,
-      lockDigest,
-      status: 'ok',
-      updatedAt: new Date().toISOString(),
-      diagnostics: result.diagnostics,
-      artifacts: result.artifacts,
-    });
-    return result;
-  } catch (error) {
-    await writeExtensionReconciliationRecord(projectRoot, {
-      version: 1,
-      lockDigest,
-      status: 'error',
-      updatedAt: new Date().toISOString(),
-      error: (error as Error).message,
-      diagnostics: [],
-      artifacts: prior?.artifacts ?? [],
-    });
-    throw error;
-  }
 }

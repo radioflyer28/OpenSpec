@@ -72,7 +72,7 @@ import {
 } from './command-surface.js';
 import { writeSharedSkillTarget } from './shared-skill-target.js';
 import { includesGitHubCopilot, writeCopilotCloudFiles, removeCopilotCloudFiles, isCopilotCloudEnabled, readCopilotCloudOptIn, findUnmanagedCloudFiles } from './github-copilot/cloud-agent.js';
-import { reconcileProjectExtensions } from './extensions/workflows.js';
+import { reconcileProjectExtensionWorkflows } from './extensions/workflow-facade.js';
 
 const require = createRequire(import.meta.url);
 const { version: OPENSPEC_VERSION } = require('../../package.json');
@@ -173,7 +173,7 @@ export class UpdateCommand {
 
     // Keep extension-contributed workflows in sync with the same tool and
     // delivery selection used for built-in workflows.
-    await reconcileProjectExtensions(resolvedProjectPath, OPENSPEC_VERSION, {
+    await reconcileProjectExtensionWorkflows(resolvedProjectPath, OPENSPEC_VERSION, {
       configuredTools: configuredAndNewTools,
       delivery,
     });

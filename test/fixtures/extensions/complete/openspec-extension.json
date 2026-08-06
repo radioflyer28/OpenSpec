@@ -21,21 +21,6 @@
         "requiredHostCapabilities": []
       }
     ],
-    "schemas": [
-      {
-        "id": "fixture-schema",
-        "path": "schemas/fixture.yaml"
-      }
-    ],
-    "commands": [
-      {
-        "id": "fixture-status",
-        "name": "Fixture Status",
-        "description": "Exercise standalone command contributions.",
-        "entry": "commands/status.md",
-        "requiredHostCapabilities": []
-      }
-    ],
     "gates": [
       {
         "id": "fixture.assurance",

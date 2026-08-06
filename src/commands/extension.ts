@@ -17,11 +17,9 @@ function sourceLabel(inspection: ExtensionInspection): string {
 
 function contributionsLabel(inspection: ExtensionInspection): string {
   const contributions = inspection.manifest?.contributes;
-  if (!contributions) return 'workflows=?, schemas=?, commands=?, gates=?';
+  if (!contributions) return 'workflows=?, gates=?';
   return [
     `workflows=${contributions.workflows.length}`,
-    `schemas=${contributions.schemas.length}`,
-    `commands=${contributions.commands.length}`,
     `gates=${contributions.gates.length}`,
   ].join(', ');
 }
@@ -73,6 +71,9 @@ async function serviceForProject(
     ...(options.globalDataDir ? { globalDataDir: options.globalDataDir } : {}),
     ...(options.acquire ? { acquire: options.acquire } : {}),
     ...(options.reconcile ? { reconcile: options.reconcile } : {}),
+    ...(Object.prototype.hasOwnProperty.call(options, 'extensionApiProvider')
+      ? { extensionApiProvider: options.extensionApiProvider }
+      : {}),
   });
 }
 

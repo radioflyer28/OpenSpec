@@ -38,8 +38,6 @@ function manifest(id: string, workflowId = `${id}-run`) {
           requiredHostCapabilities: [],
         },
       ],
-      schemas: [],
-      commands: [],
       gates: [
         {
           id: `${id}.gate`,
@@ -101,6 +99,26 @@ describe('extension registry snapshot', () => {
       expect.objectContaining({ code: 'extension_optional_capability_unavailable' })
     );
     expect(Object.isFrozen(snapshot)).toBe(true);
+  });
+
+  it('reports an unavailable extension API separately from an invalid manifest', async () => {
+    await linkFixture('api-dependent-extension');
+
+    const snapshot = await buildExtensionRegistrySnapshot({
+      projectRoot,
+      coreVersion: '1.8.0',
+      hostCapabilities,
+      extensionApiProvider: {},
+    });
+
+    expect(snapshot.extensions).toEqual([]);
+    expect(snapshot.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: 'extension_api_unavailable',
+        extensionId: 'api-dependent-extension',
+        message: expect.stringContaining('API-bearing OpenSpec distribution'),
+      })
+    );
   });
 
   it('removes extension-to-extension workflow conflicts from the snapshot', async () => {

@@ -5,19 +5,18 @@ import { readExtensionLockfile, type ExtensionLockEntryV1 } from './lockfile.js'
 import { loadExtensionManifestV1 } from './manifest.js';
 import { resolveContainedExtensionPath, resolveLocalExtensionLink } from './paths.js';
 import type {
-  CommandContributionV1,
   ExtensionManifestV1,
   GateContributionV1,
   HostCapabilitiesV1,
-  SchemaContributionV1,
   WorkflowContributionV1,
 } from './types.js';
 
-export type ExtensionContributionKind = 'workflows' | 'schemas' | 'commands' | 'gates';
+export type ExtensionContributionKind = 'workflows' | 'gates';
 
 export interface ExtensionRegistryDiagnostic {
   code:
     | 'extension_source_unavailable'
+    | 'extension_api_unavailable'
     | 'extension_manifest_invalid'
     | 'extension_lock_mismatch'
     | 'extension_required_capability_unavailable'
@@ -47,8 +46,6 @@ export interface ResolvedContributionV1<T> {
 export interface ExtensionRegistrySnapshot {
   extensions: readonly ResolvedExtensionV1[];
   workflows: readonly ResolvedContributionV1<WorkflowContributionV1>[];
-  schemas: readonly ResolvedContributionV1<SchemaContributionV1>[];
-  commands: readonly ResolvedContributionV1<CommandContributionV1>[];
   gates: readonly ResolvedContributionV1<GateContributionV1>[];
   diagnostics: readonly ExtensionRegistryDiagnostic[];
   requireGate(id: string): ResolvedContributionV1<GateContributionV1>;
@@ -60,6 +57,7 @@ export interface BuildExtensionRegistryOptions {
   hostCapabilities: HostCapabilitiesV1;
   globalDataDir?: string;
   builtinIds?: Partial<Record<ExtensionContributionKind, readonly string[]>>;
+  extensionApiProvider?: unknown;
 }
 
 function missingCapabilities(required: readonly string[], available: HostCapabilitiesV1): string[] {
@@ -84,12 +82,6 @@ export async function validateExtensionContributionPaths(
 ): Promise<void> {
   for (const workflow of manifest.contributes.workflows) {
     await resolveContainedExtensionPath(root, workflow.entry);
-  }
-  for (const schema of manifest.contributes.schemas) {
-    await resolveContainedExtensionPath(root, schema.path);
-  }
-  for (const command of manifest.contributes.commands) {
-    await resolveContainedExtensionPath(root, command.entry);
   }
   for (const gate of manifest.contributes.gates) {
     await resolveContainedExtensionPath(root, gate.module);
@@ -151,8 +143,6 @@ export async function buildExtensionRegistrySnapshot(
   const extensions: ResolvedExtensionV1[] = [];
   const candidates = {
     workflows: [] as ResolvedContributionV1<WorkflowContributionV1>[],
-    schemas: [] as ResolvedContributionV1<SchemaContributionV1>[],
-    commands: [] as ResolvedContributionV1<CommandContributionV1>[],
     gates: [] as ResolvedContributionV1<GateContributionV1>[],
   };
 
@@ -172,11 +162,19 @@ export async function buildExtensionRegistrySnapshot(
       continue;
     }
 
-    const loaded = loadExtensionManifestV1(rawManifest, options.coreVersion);
+    const loaded = loadExtensionManifestV1(
+      rawManifest,
+      options.coreVersion,
+      Object.prototype.hasOwnProperty.call(options, 'extensionApiProvider')
+        ? options.extensionApiProvider
+        : undefined
+    );
     if (!loaded.manifest) {
       diagnostics.push(
         ...loaded.diagnostics.map((diagnostic) => ({
-          code: 'extension_manifest_invalid' as const,
+          code: diagnostic.code === 'extension_api_unavailable'
+            ? 'extension_api_unavailable' as const
+            : 'extension_manifest_invalid' as const,
           extensionId,
           message: `${diagnostic.path}: ${diagnostic.message}`,
         }))
@@ -230,7 +228,7 @@ export async function buildExtensionRegistrySnapshot(
 
     const resolvedExtension = Object.freeze({ root, manifest, lockEntry: entry });
     extensions.push(resolvedExtension);
-    for (const kind of ['workflows', 'schemas', 'commands', 'gates'] as const) {
+    for (const kind of ['workflows', 'gates'] as const) {
       for (const contribution of manifest.contributes[kind]) {
         const required = 'requiredHostCapabilities' in contribution
           ? contribution.requiredHostCapabilities
@@ -262,18 +260,6 @@ export async function buildExtensionRegistrySnapshot(
     options.builtinIds?.workflows ?? [],
     diagnostics
   );
-  const schemas = resolveContributionConflicts(
-    'schemas',
-    candidates.schemas,
-    options.builtinIds?.schemas ?? [],
-    diagnostics
-  );
-  const commands = resolveContributionConflicts(
-    'commands',
-    candidates.commands,
-    options.builtinIds?.commands ?? [],
-    diagnostics
-  );
   const gates = resolveContributionConflicts(
     'gates',
     candidates.gates,
@@ -284,8 +270,6 @@ export async function buildExtensionRegistrySnapshot(
   const snapshot: ExtensionRegistrySnapshot = {
     extensions: Object.freeze(extensions),
     workflows,
-    schemas,
-    commands,
     gates,
     diagnostics: Object.freeze(diagnostics),
     requireGate(id) {

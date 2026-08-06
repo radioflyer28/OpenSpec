@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { getGlobalDataDir } from '../global-config.js';
 import { ALL_WORKFLOWS } from '../profiles.js';
+import { OPEN_SPEC_EXTENSION_API_V1 } from './api.js';
 import {
   acquireRegistryExtension,
   type AcquiredRegistryExtension,
@@ -60,6 +61,7 @@ export interface ExtensionLifecycleOptions {
   globalDataDir?: string;
   acquire?: (options: AcquireRegistryExtensionOptions) => Promise<AcquiredRegistryExtension>;
   reconcile?: ExtensionWorkflowReconciler;
+  extensionApiProvider?: unknown;
 }
 
 export interface ExtensionInspection {
@@ -68,7 +70,7 @@ export interface ExtensionInspection {
   root?: string;
   manifest?: ExtensionManifestV1;
   sourceState: 'available' | 'unavailable';
-  compatibility: 'compatible' | 'incompatible' | 'invalid' | 'unavailable';
+  compatibility: 'compatible' | 'incompatible' | 'api-unavailable' | 'invalid' | 'unavailable';
   diagnostics: string[];
   registryDiagnostics: ExtensionRegistryDiagnostic[];
   reconciliation: { state: 'ok' | 'drifted'; detail?: string };
@@ -106,9 +108,14 @@ async function resolvedSourceRoot(
 async function loadValidManifest(
   root: string,
   coreVersion: string,
+  extensionApiProvider: unknown,
   expectedId?: string
 ): Promise<ExtensionManifestV1> {
-  const loaded = loadExtensionManifestV1(await readRawManifest(root), coreVersion);
+  const loaded = loadExtensionManifestV1(
+    await readRawManifest(root),
+    coreVersion,
+    extensionApiProvider
+  );
   if (!loaded.manifest) throw manifestError(expectedId ?? '<unknown>', loaded.diagnostics);
   if (expectedId && loaded.manifest.id !== expectedId) {
     throw new Error(
@@ -126,6 +133,7 @@ export class ExtensionLifecycleService {
   private readonly globalDataDir: string;
   private readonly acquirePackage: NonNullable<ExtensionLifecycleOptions['acquire']>;
   private readonly reconcileWorkflows: ExtensionWorkflowReconciler;
+  private readonly extensionApiProvider: unknown;
 
   constructor(options: ExtensionLifecycleOptions) {
     this.projectRoot = options.projectRoot;
@@ -133,9 +141,12 @@ export class ExtensionLifecycleService {
     this.hostCapabilities = options.hostCapabilities ?? DEFAULT_EXTENSION_HOST_CAPABILITIES;
     this.globalDataDir = options.globalDataDir ?? getGlobalDataDir();
     this.acquirePackage = options.acquire ?? acquireRegistryExtension;
+    this.extensionApiProvider = Object.prototype.hasOwnProperty.call(options, 'extensionApiProvider')
+      ? options.extensionApiProvider
+      : OPEN_SPEC_EXTENSION_API_V1;
     this.reconcileWorkflows = options.reconcile ?? (async (context) => {
-      const { reconcileExtensionWorkflows } = await import('./workflows.js');
-      return reconcileExtensionWorkflows(context);
+      const { reconcileExtensionLifecycleWorkflows } = await import('./workflow-facade.js');
+      return reconcileExtensionLifecycleWorkflows(context);
     });
   }
 
@@ -144,7 +155,11 @@ export class ExtensionLifecycleService {
       packageSpec,
       globalDataDir: this.globalDataDir,
     });
-    const manifest = await loadValidManifest(acquired.packageRoot, this.coreVersion);
+    const manifest = await loadValidManifest(
+      acquired.packageRoot,
+      this.coreVersion,
+      this.extensionApiProvider
+    );
     if (manifest.version !== acquired.version) {
       throw new Error(
         `Package version '${acquired.version}' does not match extension manifest version '${manifest.version}'.`
@@ -165,7 +180,11 @@ export class ExtensionLifecycleService {
 
   async link(inputPath: string): Promise<ExtensionInspection> {
     const resolved = await resolveLocalExtensionLink(this.projectRoot, inputPath);
-    const manifest = await loadValidManifest(resolved.canonicalPath, this.coreVersion);
+    const manifest = await loadValidManifest(
+      resolved.canonicalPath,
+      this.coreVersion,
+      this.extensionApiProvider
+    );
     const current = await readExtensionLockfile(this.projectRoot);
     for (const [otherId, entry] of Object.entries(current.extensions)) {
       if (otherId === manifest.id || entry.source.kind !== 'link') continue;
@@ -197,7 +216,7 @@ export class ExtensionLifecycleService {
     const entry = lockfile.extensions[id];
     if (!entry) throw new Error(`Unknown extension '${id}'.`);
     const root = await resolvedSourceRoot(this.projectRoot, this.globalDataDir, entry);
-    const manifest = await loadValidManifest(root, this.coreVersion, id);
+    const manifest = await loadValidManifest(root, this.coreVersion, this.extensionApiProvider, id);
     if (manifest.version !== entry.version) {
       throw new Error(
         `Extension '${id}' lock version '${entry.version}' does not match manifest version '${manifest.version}'.`
@@ -291,12 +310,18 @@ export class ExtensionLifecycleService {
 
     try {
       root = await resolvedSourceRoot(this.projectRoot, this.globalDataDir, entry);
-      const loaded = loadExtensionManifestV1(await readRawManifest(root), this.coreVersion);
+      const loaded = loadExtensionManifestV1(
+        await readRawManifest(root),
+        this.coreVersion,
+        this.extensionApiProvider
+      );
       if (!loaded.manifest) {
         diagnostics.push(...loaded.diagnostics.map((item) => `${item.path}: ${item.message}`));
         compatibility = loaded.diagnostics.some((item) => item.code === 'extension_core_incompatible')
           ? 'incompatible'
-          : 'invalid';
+          : loaded.diagnostics.some((item) => item.code === 'extension_api_unavailable')
+            ? 'api-unavailable'
+            : 'invalid';
       } else {
         manifest = loaded.manifest;
         if (manifest.id !== id || manifest.version !== entry.version) {
@@ -319,6 +344,7 @@ export class ExtensionLifecycleService {
       hostCapabilities: this.hostCapabilities,
       globalDataDir: this.globalDataDir,
       builtinIds: { workflows: ALL_WORKFLOWS },
+      extensionApiProvider: this.extensionApiProvider,
     });
     const registryDiagnostics = snapshot.diagnostics.filter((item) =>
       item.extensionId.split(',').includes(id)
