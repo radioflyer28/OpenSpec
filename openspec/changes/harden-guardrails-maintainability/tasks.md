@@ -76,11 +76,11 @@
 
 ## 9. Cross-Repository Release Readiness
 
-- [ ] 9.1 Run core build, type-check, lint, full regression, extension conformance, archive-gate, built-in parity, and package tests after seam reduction.
-- [ ] 9.2 Run companion build, type-check, lint, full regression, Tier 0 protocol, event replay, stale evidence, specialist routing, TDD, repair, acceptance, and package tests.
-- [ ] 9.3 Run cross-repository install, link, doctor, workflow generation, guarded execution, human acceptance, audited override, and final archive scenarios.
+- [x] 9.1 Run core build, type-check, lint, full regression, extension conformance, archive-gate, built-in parity, and package tests after seam reduction.
+- [x] 9.2 Run companion build, type-check, lint, full regression, Tier 0 protocol, event replay, stale evidence, specialist routing, TDD, repair, acceptance, and package tests.
+- [x] 9.3 Run cross-repository install, link, doctor, workflow generation, guarded execution, human acceptance, audited override, and final archive scenarios.
 - [ ] 9.4 Verify fork and companion release candidates on Linux, macOS, and Windows, including platform-specific paths and atomic state updates.
-- [ ] 9.5 Pack both release units, inspect their published file lists and dependency metadata, and prove the companion imports only the public extension API.
-- [ ] 9.6 Document routine upstream update, seam rebase, compatibility diagnosis, release order, rollback, and transition-to-official-upstream procedures.
-- [ ] 9.7 Confirm no Guardrails workflow creates `PROJECT.md`, `ROADMAP.md`, `PLAN.md`, `STATE.md`, phases, or milestones and that current OpenSpec artifacts remain the sole human-maintained planning truth.
+- [x] 9.5 Pack both release units, inspect their published file lists and dependency metadata, and prove the companion imports only the public extension API.
+- [x] 9.6 Document routine upstream update, seam rebase, compatibility diagnosis, release order, rollback, and transition-to-official-upstream procedures.
+- [x] 9.7 Confirm no Guardrails workflow creates `PROJECT.md`, `ROADMAP.md`, `PLAN.md`, `STATE.md`, phases, or milestones and that current OpenSpec artifacts remain the sole human-maintained planning truth.
 - [ ] 9.8 Publish the API-bearing fork prerelease, run companion conformance against the published artifact, then release Guardrails independently.
