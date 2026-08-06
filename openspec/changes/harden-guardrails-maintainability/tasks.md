@@ -33,17 +33,17 @@
 - [x] 4.4 Build and type-check the patched upstream worktree and run core extension, workflow-generation, lifecycle, and archive-gate suites.
 - [ ] 4.5 Run the patched-upstream filesystem and path-sensitive suite on Linux, macOS, and Windows using Node path APIs for every generated test path.
 - [ ] 4.6 Enable hosted Actions on the fork and verify a real push or pull request produces non-vacuous successful matrix and upstream-survivability runs.
-- [ ] 4.7 Prepare an upstreamable core-seam commit stack or pull request containing only generic API, integration, tests, documentation, and changeset material.
+- [x] 4.7 Prepare an upstreamable core-seam commit stack or pull request containing only generic API, integration, tests, documentation, and changeset material.
 
 ## 5. Add Stable Artifact Identity and Live Reconciliation in the Companion
 
-- [ ] 5.1 Add fail-first compiler tests that distinguish explicit stable task IDs from positional fallback IDs and reject task-bound evidence for unstable identifiers.
-- [ ] 5.2 Add artifact source-state schemas containing contained change-relative paths, stable OpenSpec identifiers, and content digests for proposal, design, tasks, and each delta spec.
-- [ ] 5.3 Prefer stable OpenSpec machine-readable artifact output for requirements, scenarios, and tasks, retaining a version-tested Markdown compatibility adapter only where no public output exists.
-- [ ] 5.4 Implement explicit task-ID validation and cross-platform artifact resolution for Windows drives, separators, spaces, aliases, and case behavior.
-- [ ] 5.5 Add fail-first reconciliation tests for checked tasks, newly added tasks, removed tasks, reordered tasks, changed requirements, changed scenarios, and unchanged artifacts.
-- [ ] 5.6 Recompile current OpenSpec artifacts during every `check` and `run-status`, derive task progress from the current `tasks.md`, and mark source-dependent evidence stale when its controlling digest changes.
-- [ ] 5.7 Remove generated task status as an input to later decisions and prove run and assurance projections cannot supersede current OpenSpec scope or progress.
+- [x] 5.1 Add fail-first compiler tests that distinguish explicit stable task IDs from positional fallback IDs and reject task-bound evidence for unstable identifiers.
+- [x] 5.2 Add artifact source-state schemas containing contained change-relative paths, stable OpenSpec identifiers, and content digests for proposal, design, tasks, and each delta spec.
+- [x] 5.3 Prefer stable OpenSpec machine-readable artifact output for requirements, scenarios, and tasks, retaining a version-tested Markdown compatibility adapter only where no public output exists.
+- [x] 5.4 Implement explicit task-ID validation and cross-platform artifact resolution for Windows drives, separators, spaces, aliases, and case behavior.
+- [x] 5.5 Add fail-first reconciliation tests for checked tasks, newly added tasks, removed tasks, reordered tasks, changed requirements, changed scenarios, and unchanged artifacts.
+- [x] 5.6 Recompile current OpenSpec artifacts during every `check` and `run-status`, derive task progress from the current `tasks.md`, and mark source-dependent evidence stale when its controlling digest changes.
+- [x] 5.7 Remove generated task status as an input to later decisions and prove run and assurance projections cannot supersede current OpenSpec scope or progress.
 
 ## 6. Implement the Tier 0 Event Store and Projections
 
