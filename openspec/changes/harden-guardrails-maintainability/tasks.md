@@ -56,23 +56,23 @@
 
 ## 7. Complete the Host-Neutral Tier 0 CLI Protocol
 
-- [ ] 7.1 Add CLI parsing and JSON-contract tests for `record task`, `record evidence`, `record finding`, `record deviation`, `record repair`, and `accept` operations.
-- [ ] 7.2 Implement task transition recording with dependency validation, blocker propagation, authoritative checkbox reconciliation, and next-action reporting.
-- [ ] 7.3 Implement evidence recording with command/check identity, observed source state, output digest, exit result, relevance, pre-existing-failure distinction, and provenance validation.
-- [ ] 7.4 Add end-to-end RED–GREEN–REFACTOR tests proving late, unchanged-state, irrelevant, fabricated, or pre-existing RED evidence cannot satisfy the TDD gate.
-- [ ] 7.5 Implement reviewer, verifier, specialist-checker, and human finding recording while ensuring executor-origin evidence alone cannot pass independent gates.
-- [ ] 7.6 Implement deviation disposition and repair-attempt recording with task/requirement scope, relevant-change enforcement, bounded attempts, rerun results, and user escalation.
-- [ ] 7.7 Implement human acceptance through the portable protocol by invoking the core acceptance API and binding actor, result digest, evidence digest, and controlling artifact state.
-- [ ] 7.8 Make every recording operation atomic and idempotent with one-document JSON output, actionable conflict diagnostics, and no requirement to edit generated JSON directly.
-- [ ] 7.9 Update `run`, `check`, and `run-status` workflows to drive Tier 0 exclusively through the supported commands and to update OpenSpec task checkboxes as the planning authority.
+- [x] 7.1 Add CLI parsing and JSON-contract tests for `record task`, `record evidence`, `record finding`, `record deviation`, `record repair`, and `accept` operations.
+- [x] 7.2 Implement task transition recording with dependency validation, blocker propagation, authoritative checkbox reconciliation, and next-action reporting.
+- [x] 7.3 Implement evidence recording with command/check identity, observed source state, output digest, exit result, relevance, pre-existing-failure distinction, and provenance validation.
+- [x] 7.4 Add end-to-end RED–GREEN–REFACTOR tests proving late, unchanged-state, irrelevant, fabricated, or pre-existing RED evidence cannot satisfy the TDD gate.
+- [x] 7.5 Implement reviewer, verifier, specialist-checker, and human finding recording while ensuring executor-origin evidence alone cannot pass independent gates.
+- [x] 7.6 Implement deviation disposition and repair-attempt recording with task/requirement scope, relevant-change enforcement, bounded attempts, rerun results, and user escalation.
+- [x] 7.7 Implement human acceptance through the portable protocol by invoking the core acceptance API and binding actor, result digest, evidence digest, and controlling artifact state.
+- [x] 7.8 Make every recording operation atomic and idempotent with one-document JSON output, actionable conflict diagnostics, and no requirement to edit generated JSON directly.
+- [x] 7.9 Update `run`, `check`, and `run-status` workflows to drive Tier 0 exclusively through the supported commands and to update OpenSpec task checkboxes as the planning authority.
 - [x] 7.10 Expose `--repair` only when a repair adapter is available; otherwise report bounded repair instructions without claiming a repair was performed.
 
 ## 8. Keep Optional Tiers Honest and Non-Mutating
 
-- [ ] 8.1 Add fail-first tests distinguishing user permission flags from reported or probed host capabilities during tier negotiation.
-- [ ] 8.2 Require a registered host dispatcher before selecting Tier 1 and both dispatcher and worktree adapters before selecting Tier 2; otherwise report an assurance-preserving Tier 0 downgrade.
-- [ ] 8.3 Route Tier 1 and Tier 2 outcomes through the same validated event schemas and projection replay used by Tier 0.
-- [ ] 8.4 Verify commits, branches, and worktrees remain independently disabled on all platforms unless both user permission and adapter capability are present.
+- [x] 8.1 Add fail-first tests distinguishing user permission flags from reported or probed host capabilities during tier negotiation.
+- [x] 8.2 Require a registered host dispatcher before selecting Tier 1 and both dispatcher and worktree adapters before selecting Tier 2; otherwise report an assurance-preserving Tier 0 downgrade.
+- [x] 8.3 Route Tier 1 and Tier 2 outcomes through the same validated event schemas and projection replay used by Tier 0.
+- [x] 8.4 Verify commits, branches, and worktrees remain independently disabled on all platforms unless both user permission and adapter capability are present.
 
 ## 9. Cross-Repository Release Readiness
 
