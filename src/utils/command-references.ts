@@ -37,10 +37,12 @@ import {
  */
 export function transformCommandInvocations(
   text: string,
-  invocation: CommandInvocation
+  invocation: CommandInvocation,
+  additionalCommandIds: readonly string[] = []
 ): string {
+  const additional = new Set(additionalCommandIds);
   return text.replace(/\/opsx:([a-z-]+)/g, (match, commandId: string) =>
-    commandId in COMMAND_TO_SKILL_NAME
+    commandId in COMMAND_TO_SKILL_NAME || additional.has(commandId)
       ? formatCommandInvocation(invocation, commandId)
       : match
   );
@@ -96,16 +98,23 @@ export function usesNaturalLanguageSkillReferences(toolId: string): boolean {
   return NATURAL_LANGUAGE_SKILL_TOOLS.has(toolId);
 }
 
-function replaceCommandsWithNaturalLanguageSkillReferences(text: string): string {
+function replaceCommandsWithNaturalLanguageSkillReferences(
+  text: string,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
+): string {
   return text.replace(/\/opsx:([a-z-]+)/g, (match, commandId: string) => {
-    const skillName = COMMAND_TO_SKILL_NAME[commandId];
+    const skillName = COMMAND_TO_SKILL_NAME[commandId] ?? additionalSkillNames[commandId];
     return skillName === undefined ? match : `the ${skillName} skill`;
   });
 }
 
-function replaceCommandsWithSkillReferences(text: string, prefix: string): string {
+function replaceCommandsWithSkillReferences(
+  text: string,
+  prefix: string,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
+): string {
   return text.replace(/\/opsx:([a-z-]+)/g, (match, commandId: string) => {
-    const skillName = COMMAND_TO_SKILL_NAME[commandId];
+    const skillName = COMMAND_TO_SKILL_NAME[commandId] ?? additionalSkillNames[commandId];
     return skillName === undefined ? match : `${prefix}${skillName}`;
   });
 }
@@ -114,9 +123,12 @@ function replaceCommandsWithSkillReferences(text: string, prefix: string): strin
  * Keeps Codex's `$<name>` spelling first while making its canonical shared
  * `.agents` tree usable by agents that invoke the same skills with `/<name>`.
  */
-export function transformToCodexCompatibleSkillReferences(text: string): string {
+export function transformToCodexCompatibleSkillReferences(
+  text: string,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
+): string {
   return text.replace(/\/opsx:([a-z-]+)/g, (match, commandId: string) => {
-    const skillName = COMMAND_TO_SKILL_NAME[commandId];
+    const skillName = COMMAND_TO_SKILL_NAME[commandId] ?? additionalSkillNames[commandId];
     return skillName === undefined
       ? match
       : `$${skillName} (Codex) or /${skillName} (other agents)`;
@@ -154,15 +166,23 @@ export function transformToSkillReferences(text: string): string {
  * @param toolId - The AI tool identifier (e.g. 'kimi', 'vibe', 'rovodev')
  * @returns A transformer converting `/opsx:*` references to skill invocations
  */
-export function getSkillReferenceTransformer(toolId: string): (text: string) => string {
+export function getSkillReferenceTransformer(
+  toolId: string,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
+): (text: string) => string {
+  const hasAdditionalSkills = Object.keys(additionalSkillNames).length > 0;
   if (usesNaturalLanguageSkillReferences(toolId)) {
-    return replaceCommandsWithNaturalLanguageSkillReferences;
+    return hasAdditionalSkills
+      ? (text: string) => replaceCommandsWithNaturalLanguageSkillReferences(text, additionalSkillNames)
+      : replaceCommandsWithNaturalLanguageSkillReferences;
   }
   const prefix = SKILL_INVOCATION_PREFIX[toolId];
   if (prefix === undefined) {
-    return transformToSkillReferences;
+    return hasAdditionalSkills
+      ? (text: string) => replaceCommandsWithSkillReferences(text, '/', additionalSkillNames)
+      : transformToSkillReferences;
   }
-  return (text: string) => replaceCommandsWithSkillReferences(text, prefix);
+  return (text: string) => replaceCommandsWithSkillReferences(text, prefix, additionalSkillNames);
 }
 
 /**
@@ -205,18 +225,24 @@ export function getTransformerForTool(
   toolId: string,
   delivery: 'both' | 'skills' | 'commands',
   capability: CommandSurfaceCapability,
-  invocation: CommandInvocation | undefined
+  invocation: CommandInvocation | undefined,
+  additionalSkillNames: Readonly<Record<string, string>> = {}
 ): ((text: string) => string) | undefined {
+  const hasAdditionalSkills = Object.keys(additionalSkillNames).length > 0;
   if (delivery === 'skills' || capability !== 'adapter-backed') {
     return toolId === 'codex'
-      ? transformToCodexCompatibleSkillReferences
-      : getSkillReferenceTransformer(toolId);
+      ? hasAdditionalSkills
+        ? (text: string) => transformToCodexCompatibleSkillReferences(text, additionalSkillNames)
+        : transformToCodexCompatibleSkillReferences
+      : getSkillReferenceTransformer(toolId, additionalSkillNames);
   }
   if (toolId === 'devin' && delivery === 'both') {
-    return getSkillReferenceTransformer(toolId);
+    return getSkillReferenceTransformer(toolId, additionalSkillNames);
   }
   if (invocation !== undefined && needsInvocationRewrite(invocation)) {
-    return (text: string) => transformCommandInvocations(text, invocation);
+    return hasAdditionalSkills
+      ? (text: string) => transformCommandInvocations(text, invocation, Object.keys(additionalSkillNames))
+      : (text: string) => transformCommandInvocations(text, invocation);
   }
   return undefined;
 }

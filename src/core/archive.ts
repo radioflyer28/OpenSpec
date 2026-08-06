@@ -28,6 +28,16 @@ import { METADATA_FILENAME, readRetireCapabilitiesMarker, readSkipSpecsMarker } 
 import { isNonInteractivePromptError } from '../utils/interactive.js';
 import { FileSystemUtils } from '../utils/file-system.js';
 import { folderStyleNameProblem } from './id.js';
+import { createRequire } from 'node:module';
+import {
+  DEFAULT_EXTENSION_HOST_CAPABILITIES,
+  enforceExtensionArchiveGates,
+  ExtensionArchiveGateError,
+  type ExtensionArchiveGateDiagnostic,
+} from './extensions/index.js';
+
+const require = createRequire(import.meta.url);
+const { version: OPENSPEC_VERSION } = require('../../package.json') as { version: string };
 
 function isMissingPathError(error: unknown): boolean {
   return (
@@ -150,6 +160,8 @@ export interface ArchiveOptions {
   json?: boolean;
   store?: string;
   storePath?: string;
+  overrideGate?: string | string[];
+  reason?: string;
 }
 
 interface ArchiveDiagnostic {
@@ -157,6 +169,11 @@ interface ArchiveDiagnostic {
   code: string;
   message: string;
   fix?: string;
+  gateId?: string;
+  gateStatus?: ExtensionArchiveGateDiagnostic['gateStatus'];
+  evidence?: string[];
+  remediation?: string[];
+  blockingGates?: string[];
 }
 
 interface ArchiveResult {
@@ -167,6 +184,7 @@ interface ArchiveResult {
   totals?: { added: number; modified: number; removed: number; renamed: number };
   /** Non-blocking spec-merge warnings (e.g. a REMOVED requirement that was already gone). */
   warnings?: string[];
+  gates?: { warnings: string[]; overridden: string[] };
 }
 
 /**
@@ -296,6 +314,9 @@ async function confirmOrBlock(
 }
 
 function toArchiveDiagnostic(error: unknown): ArchiveDiagnostic {
+  if (error instanceof ExtensionArchiveGateError) {
+    return { severity: 'error', ...error.diagnostic };
+  }
   if (error instanceof ArchiveBlockedError) {
     return error.diagnostic;
   }
@@ -1149,6 +1170,19 @@ export class ArchiveCommand {
       );
     }
 
+    // Required gates run before validation, prompts, or filesystem mutation.
+    const extensionGates = await enforceExtensionArchiveGates({
+      projectRoot: root.path,
+      changeName,
+      coreVersion: OPENSPEC_VERSION,
+      hostCapabilities: DEFAULT_EXTENSION_HOST_CAPABILITIES,
+      overrideGate: options.overrideGate,
+      reason: options.reason,
+    });
+    if (!json) {
+      for (const message of extensionGates.messages) console.log(message);
+    }
+
     const skipValidation = options.validate === false || options.noValidate === true;
 
     // Validate specs and change before archiving
@@ -1992,6 +2026,14 @@ export class ArchiveCommand {
         specsUpdated,
         ...(totals ? { totals } : {}),
         ...(specWarnings.length > 0 ? { warnings: specWarnings } : {}),
+        ...(extensionGates.warnings.length > 0 || extensionGates.overridden.length > 0
+          ? {
+              gates: {
+                warnings: extensionGates.warnings.map((result) => result.gateId),
+                overridden: extensionGates.overridden,
+              },
+            }
+          : {}),
       };
     } finally {
       if (archiveClaim) await releaseArchiveClaim(archiveClaim, claimPath).catch(() => undefined);
