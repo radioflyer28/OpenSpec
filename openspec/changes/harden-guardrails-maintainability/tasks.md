@@ -47,12 +47,12 @@
 
 ## 6. Implement the Tier 0 Event Store and Projections
 
-- [ ] 6.1 Define versioned event-envelope and payload schemas for task transitions, evidence, findings, deviations, repairs, and human decisions with run, source, actor, provenance, and digest fields.
-- [ ] 6.2 Add fail-first event-store tests for atomic replacement, interrupted writes, valid retries, conflicting duplicate IDs, corrupt state, unknown event versions, and stable ordering.
-- [ ] 6.3 Implement the sequential `.guardrails/events.json` store with idempotent append semantics and explicit generated-file ownership.
-- [ ] 6.4 Implement deterministic replay from current OpenSpec artifacts plus events into `run.json` and `assurance.json`, including stale-evidence diagnostics and digest binding.
-- [ ] 6.5 Add golden replay tests proving identical inputs create byte-stable projections and that direct projection edits are detected and repaired or blocked through reconciliation.
-- [ ] 6.6 Migrate existing v1 run and assurance records into event-backed projections without losing gate obligations, evidence references, deviations, repairs, or audit history.
+- [x] 6.1 Define versioned event-envelope and payload schemas for task transitions, evidence, findings, deviations, repairs, and human decisions with run, source, actor, provenance, and digest fields.
+- [x] 6.2 Add fail-first event-store tests for atomic replacement, interrupted writes, valid retries, conflicting duplicate IDs, corrupt state, unknown event versions, and stable ordering.
+- [x] 6.3 Implement the sequential `.guardrails/events.json` store with idempotent append semantics and explicit generated-file ownership.
+- [x] 6.4 Implement deterministic replay from current OpenSpec artifacts plus events into `run.json` and `assurance.json`, including stale-evidence diagnostics and digest binding.
+- [x] 6.5 Add golden replay tests proving identical inputs create byte-stable projections and that direct projection edits are detected and repaired or blocked through reconciliation.
+- [x] 6.6 Migrate existing v1 run and assurance records into event-backed projections without losing gate obligations, evidence references, deviations, repairs, or audit history.
 
 ## 7. Complete the Host-Neutral Tier 0 CLI Protocol
 
