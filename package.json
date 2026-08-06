@@ -25,6 +25,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./extensions": {
+      "types": "./dist/core/extensions/index.d.ts",
+      "default": "./dist/core/extensions/index.js"
     }
   },
   "bin": {
@@ -66,6 +70,7 @@
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.1",
     "@types/node": "^20.19.43",
+    "@types/semver": "^7.7.1",
     "@vitest/ui": "^3.2.6",
     "eslint": "^10.5.0",
     "smol-toml": "^1.7.1",
@@ -81,6 +86,7 @@
     "cross-spawn": "7.0.6",
     "fast-glob": "^3.3.3",
     "ora": "^9.4.1",
+    "semver": "^7.7.2",
     "yaml": "^2.8.3",
     "zod": "^4.4.3"
   },
