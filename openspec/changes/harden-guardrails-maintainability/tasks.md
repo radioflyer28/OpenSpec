@@ -31,8 +31,8 @@
 - [x] 4.2 Fetch `https://github.com/Fission-AI/OpenSpec.git` as an explicit `upstream` remote, resolve and print `upstream/main`, and fail if the generated seam patch is empty.
 - [x] 4.3 Generate the seam patch from the explicit path allowlist, run `git apply --check` against a detached worktree at the fetched official revision, and report conflicting files on failure.
 - [x] 4.4 Build and type-check the patched upstream worktree and run core extension, workflow-generation, lifecycle, and archive-gate suites.
-- [ ] 4.5 Run the patched-upstream filesystem and path-sensitive suite on Linux, macOS, and Windows using Node path APIs for every generated test path.
-- [ ] 4.6 Enable hosted Actions on the fork and verify a real push or pull request produces non-vacuous successful matrix and upstream-survivability runs.
+- [x] 4.5 Run the patched-upstream filesystem and path-sensitive suite on Linux, macOS, and Windows using Node path APIs for every generated test path.
+- [x] 4.6 Enable hosted Actions on the fork and verify a real push or pull request produces non-vacuous successful matrix and upstream-survivability runs.
 - [x] 4.7 Prepare an upstreamable core-seam commit stack or pull request containing only generic API, integration, tests, documentation, and changeset material.
 
 ## 5. Add Stable Artifact Identity and Live Reconciliation in the Companion
@@ -79,7 +79,7 @@
 - [x] 9.1 Run core build, type-check, lint, full regression, extension conformance, archive-gate, built-in parity, and package tests after seam reduction.
 - [x] 9.2 Run companion build, type-check, lint, full regression, Tier 0 protocol, event replay, stale evidence, specialist routing, TDD, repair, acceptance, and package tests.
 - [x] 9.3 Run cross-repository install, link, doctor, workflow generation, guarded execution, human acceptance, audited override, and final archive scenarios.
-- [ ] 9.4 Verify fork and companion release candidates on Linux, macOS, and Windows, including platform-specific paths and atomic state updates.
+- [x] 9.4 Verify fork and companion release candidates on Linux, macOS, and Windows, including platform-specific paths and atomic state updates.
 - [x] 9.5 Pack both release units, inspect their published file lists and dependency metadata, and prove the companion imports only the public extension API.
 - [x] 9.6 Document routine upstream update, seam rebase, compatibility diagnosis, release order, rollback, and transition-to-official-upstream procedures.
 - [x] 9.7 Confirm no Guardrails workflow creates `PROJECT.md`, `ROADMAP.md`, `PLAN.md`, `STATE.md`, phases, or milestones and that current OpenSpec artifacts remain the sole human-maintained planning truth.
