@@ -302,7 +302,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '20.19.0'
-          cache: 'pnpm'
+          # Verification installs into a disposable worktree. Avoid persisting
+          # that job's package-manager cache, whose Windows post-step cannot
+          # reliably save state after the worktree has been removed.
 
       - name: Patch and verify freshly fetched official upstream
         run: node scripts/check-upstream-survivability.mjs
