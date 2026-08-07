@@ -28,7 +28,14 @@ function git(commandArgs, options = {}) {
 }
 
 function run(command, commandArgs, cwd) {
-  const result = spawnSync(command, commandArgs, { cwd, stdio: 'inherit', shell: false });
+  // Package-manager commands are exposed as .cmd shims on Windows and cannot
+  // be launched directly by CreateProcess. Use the platform shell there while
+  // retaining direct process execution on POSIX hosts.
+  const result = spawnSync(command, commandArgs, {
+    cwd,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  });
   if (result.error) throw result.error;
   if (result.status !== 0) {
     throw new Error(`${command} ${commandArgs.join(' ')} failed with exit code ${result.status}.`);
