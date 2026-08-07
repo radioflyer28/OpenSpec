@@ -1,4 +1,5 @@
 import { satisfies, valid as validVersion } from 'semver';
+import { OPEN_SPEC_EXTENSION_API_V1, providesExtensionApiV1 } from './api.js';
 import { EXTENSION_API_V1, ExtensionManifestV1Schema } from './schemas.js';
 import type {
   ExtensionDiagnosticV1,
@@ -11,7 +12,8 @@ function issuePath(path: PropertyKey[]): string {
 
 export function loadExtensionManifestV1(
   input: unknown,
-  coreVersion: string
+  coreVersion: string,
+  extensionApiProvider: unknown = OPEN_SPEC_EXTENSION_API_V1
 ): ExtensionManifestLoadResultV1 {
   const apiVersion =
     typeof input === 'object' && input !== null && 'apiVersion' in input
@@ -28,6 +30,35 @@ export function loadExtensionManifestV1(
         },
       ],
     };
+  }
+
+  if (!providesExtensionApiV1(extensionApiProvider)) {
+    return {
+      diagnostics: [
+        {
+          code: 'extension_api_unavailable',
+          path: 'apiVersion',
+          message: `The installed OpenSpec distribution does not provide '${EXTENSION_API_V1}'. Install an API-bearing OpenSpec distribution before installing or enabling this extension.`,
+        },
+      ],
+    };
+  }
+
+  const contributes = typeof input === 'object' && input !== null
+    && 'contributes' in input && typeof input.contributes === 'object'
+    && input.contributes !== null
+    ? input.contributes as Record<string, unknown>
+    : undefined;
+  for (const unsupported of ['schemas', 'commands'] as const) {
+    if (contributes && Object.prototype.hasOwnProperty.call(contributes, unsupported)) {
+      return {
+        diagnostics: [{
+          code: 'extension_manifest_invalid',
+          path: `contributes.${unsupported}`,
+          message: `Contribution collection '${unsupported}' is not supported by ${EXTENSION_API_V1}.`,
+        }],
+      };
+    }
   }
 
   const parsed = ExtensionManifestV1Schema.safeParse(input);

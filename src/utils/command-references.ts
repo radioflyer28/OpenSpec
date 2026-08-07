@@ -170,12 +170,17 @@ export function getSkillReferenceTransformer(
   toolId: string,
   additionalSkillNames: Readonly<Record<string, string>> = {}
 ): (text: string) => string {
+  const hasAdditionalSkills = Object.keys(additionalSkillNames).length > 0;
   if (usesNaturalLanguageSkillReferences(toolId)) {
-    return (text: string) => replaceCommandsWithNaturalLanguageSkillReferences(text, additionalSkillNames);
+    return hasAdditionalSkills
+      ? (text: string) => replaceCommandsWithNaturalLanguageSkillReferences(text, additionalSkillNames)
+      : replaceCommandsWithNaturalLanguageSkillReferences;
   }
   const prefix = SKILL_INVOCATION_PREFIX[toolId];
   if (prefix === undefined) {
-    return (text: string) => replaceCommandsWithSkillReferences(text, '/', additionalSkillNames);
+    return hasAdditionalSkills
+      ? (text: string) => replaceCommandsWithSkillReferences(text, '/', additionalSkillNames)
+      : transformToSkillReferences;
   }
   return (text: string) => replaceCommandsWithSkillReferences(text, prefix, additionalSkillNames);
 }
@@ -223,16 +228,21 @@ export function getTransformerForTool(
   invocation: CommandInvocation | undefined,
   additionalSkillNames: Readonly<Record<string, string>> = {}
 ): ((text: string) => string) | undefined {
+  const hasAdditionalSkills = Object.keys(additionalSkillNames).length > 0;
   if (delivery === 'skills' || capability !== 'adapter-backed') {
     return toolId === 'codex'
-      ? (text: string) => transformToCodexCompatibleSkillReferences(text, additionalSkillNames)
+      ? hasAdditionalSkills
+        ? (text: string) => transformToCodexCompatibleSkillReferences(text, additionalSkillNames)
+        : transformToCodexCompatibleSkillReferences
       : getSkillReferenceTransformer(toolId, additionalSkillNames);
   }
   if (toolId === 'devin' && delivery === 'both') {
     return getSkillReferenceTransformer(toolId, additionalSkillNames);
   }
   if (invocation !== undefined && needsInvocationRewrite(invocation)) {
-    return (text: string) => transformCommandInvocations(text, invocation, Object.keys(additionalSkillNames));
+    return hasAdditionalSkills
+      ? (text: string) => transformCommandInvocations(text, invocation, Object.keys(additionalSkillNames))
+      : (text: string) => transformCommandInvocations(text, invocation);
   }
   return undefined;
 }

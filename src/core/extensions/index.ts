@@ -1,4 +1,5 @@
 export * from './schemas.js';
+export * from './api.js';
 export * from './types.js';
 export * from './manifest.js';
 export * from './lockfile.js';
@@ -7,9 +8,8 @@ export * from './acquire.js';
 export * from './registry.js';
 export * from './reconciliation.js';
 export * from './lifecycle.js';
-export * from './workflows.js';
-export * from './schema-index.js';
-export * from './schemas-contribution.js';
+export * from './workflow-facade.js';
 export * from './gates-record.js';
 export * from './gates-evaluate.js';
+export * from './archive-gates.js';
 export * from './conformance.js';

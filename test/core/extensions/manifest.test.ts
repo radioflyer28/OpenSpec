@@ -7,6 +7,8 @@ import {
   EXTENSION_API_V1,
   ExtensionManifestV1Schema,
   loadExtensionManifestV1,
+  OPEN_SPEC_EXTENSION_API_V1,
+  providesExtensionApiV1,
 } from '../../../src/core/extensions/index.js';
 
 function validManifest() {
@@ -32,15 +34,6 @@ function validManifest() {
           gateDependencies: ['fixture.assurance'],
         },
       ],
-      schemas: [{ id: 'fixture-schema', path: 'schemas/fixture.yaml' }],
-      commands: [
-        {
-          id: 'fixture-status',
-          name: 'Fixture Status',
-          description: 'Report fixture status.',
-          entry: 'commands/status.md',
-        },
-      ],
       gates: [
         {
           id: 'fixture.assurance',
@@ -54,6 +47,16 @@ function validManifest() {
 }
 
 describe('ExtensionManifestV1', () => {
+  it('publishes a structural feature probe for the API-bearing distribution', () => {
+    expect(providesExtensionApiV1(OPEN_SPEC_EXTENSION_API_V1)).toBe(true);
+    expect(OPEN_SPEC_EXTENSION_API_V1).toEqual({
+      apiVersion: EXTENSION_API_V1,
+      manifestVersion: 1,
+      contributionKinds: ['workflows', 'gates'],
+    });
+    expect(providesExtensionApiV1({ apiVersion: EXTENSION_API_V1 })).toBe(false);
+  });
+
   it('accepts a complete compatible manifest', () => {
     const result = loadExtensionManifestV1(validManifest(), '1.7.0');
 
@@ -78,6 +81,19 @@ describe('ExtensionManifestV1', () => {
         })
       );
     }
+  });
+
+  it('rejects a semver-compatible OpenSpec distribution that lacks the declared API', () => {
+    const result = loadExtensionManifestV1(validManifest(), '1.8.0', {});
+
+    expect(result.manifest).toBeUndefined();
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: 'extension_api_unavailable',
+        path: 'apiVersion',
+        message: expect.stringContaining('API-bearing OpenSpec distribution'),
+      })
+    );
   });
 
   it('rejects an unsupported manifest API without loading contributions', () => {
@@ -121,6 +137,50 @@ describe('ExtensionManifestV1', () => {
     expect(result.success).toBe(false);
   });
 
+  it.each(['schemas', 'commands'] as const)(
+    'rejects the unreleased contributes.%s collection with a field-specific diagnostic',
+    (kind) => {
+      const input = structuredClone(validManifest()) as Record<string, any>;
+      input.contributes = {
+        workflows: input.contributes.workflows,
+        gates: input.contributes.gates,
+        [kind]: kind === 'schemas'
+          ? [{ id: 'fixture-schema', path: 'schemas/fixture.yaml' }]
+          : [{
+              id: 'fixture-status',
+              name: 'Fixture Status',
+              description: 'Report fixture status.',
+              entry: 'commands/status.md',
+            }],
+      };
+
+      const result = loadExtensionManifestV1(input, '1.8.0-guardrails.1');
+
+      expect(result.manifest).toBeUndefined();
+      expect(result.diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: 'extension_manifest_invalid',
+          path: `contributes.${kind}`,
+          message: expect.stringContaining('not supported by openspec.dev/extensions/v1'),
+        })
+      );
+    }
+  );
+
+  it('accepts workflows and gates as the complete v1 contribution surface', () => {
+    const input = structuredClone(validManifest()) as Record<string, any>;
+    input.contributes = {
+      workflows: input.contributes.workflows,
+      gates: input.contributes.gates,
+    };
+
+    const result = loadExtensionManifestV1(input, '1.8.0-guardrails.1');
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.manifest?.contributes).toMatchObject(input.contributes);
+    expect(Object.keys(result.manifest?.contributes ?? {}).sort()).toEqual(['gates', 'workflows']);
+  });
+
   it('rejects duplicate contribution identifiers within one contribution kind', () => {
     const invalid = structuredClone(validManifest()) as Record<string, any>;
     invalid.contributes.workflows.push({ ...invalid.contributes.workflows[0] });
@@ -151,8 +211,6 @@ describe('ExtensionManifestV1', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest?.contributes.workflows).toHaveLength(1);
-    expect(result.manifest?.contributes.schemas).toHaveLength(1);
-    expect(result.manifest?.contributes.commands).toHaveLength(1);
     expect(result.manifest?.contributes.gates).toHaveLength(1);
     expect(result.manifest?.requires.hostCapabilities).toEqual({
       required: ['structuredResults'],

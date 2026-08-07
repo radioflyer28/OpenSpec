@@ -57,6 +57,30 @@ describe('extension lockfile', () => {
     expect(content.indexOf('alpha-extension:')).toBeLessThan(content.indexOf('zeta-extension:'));
   });
 
+  it('retains registry source, resolved version, and integrity as package identity', async () => {
+    await writeExtensionLockfile(projectRoot, {
+      version: 1,
+      extensions: {
+        'fixture-extension': {
+          ...registryEntry('0.1.0'),
+          source: {
+            kind: 'registry',
+            spec: 'openspec-guardrails@0.1.0',
+          },
+          integrity: 'sha512-published-package',
+          cacheKey: 'sha512-published-package',
+        },
+      },
+    });
+
+    expect((await readExtensionLockfile(projectRoot)).extensions['fixture-extension']).toMatchObject({
+      source: { kind: 'registry', spec: 'openspec-guardrails@0.1.0' },
+      version: '0.1.0',
+      integrity: 'sha512-published-package',
+      cacheKey: 'sha512-published-package',
+    });
+  });
+
   it('upgrades one exact version while preserving unrelated entries', async () => {
     await writeExtensionLockfile(projectRoot, {
       version: 1,

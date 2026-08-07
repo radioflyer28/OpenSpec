@@ -1,9 +1,9 @@
 # Extensions
 
-OpenSpec extensions add project-scoped workflows, schemas, commands, and
-required archive gates without adding extension-specific policy to OpenSpec
-core. The v1 API is declarative except for gate providers, which are explicitly
-trusted executable modules.
+OpenSpec extensions add project-scoped workflows and required archive gates
+without adding extension-specific policy to OpenSpec core. The v1 API is
+declarative except for gate providers, which are explicitly trusted executable
+modules. Schema and standalone-command contributions are not part of v1.
 
 ## Public API and compatibility
 
@@ -12,6 +12,7 @@ Extension packages consume the supported subpath instead of OpenSpec internals:
 ```ts
 import {
   EXTENSION_API_V1,
+  OPEN_SPEC_EXTENSION_API_V1,
   assertExtensionConformanceV1,
   registerRequiredGate,
   acceptRequiredGate,
@@ -26,6 +27,10 @@ partially loaded. `requires.openspec` is a semantic-version range checked
 against the running OpenSpec version, including prereleases. Extensions should
 test their minimum and maximum supported OpenSpec releases and the current
 integration build with `assertExtensionConformanceV1`:
+
+Compatibility also requires the exported `OPEN_SPEC_EXTENSION_API_V1` feature
+marker. A semantic version match without that marker is reported separately as
+an unavailable API provider.
 
 ```ts
 await assertExtensionConformanceV1({
@@ -58,14 +63,6 @@ The current manifest shape is:
       "gateDependencies": ["example.assurance"],
       "requiredHostCapabilities": []
     }],
-    "schemas": [{ "id": "example-schema", "path": "schemas/example" }],
-    "commands": [{
-      "id": "example-status",
-      "name": "Example Status",
-      "description": "Show example status.",
-      "entry": "commands/status.md",
-      "requiredHostCapabilities": []
-    }],
     "gates": [{
       "id": "example.assurance",
       "module": "dist/gate.js",
@@ -93,12 +90,10 @@ OpenSpec owns these project files and directories:
   compatibility, and enabled state.
 - `openspec/extensions.generated.yaml` records the exact extension version,
   workflow, tool, surface, path, and content digest for generated instructions.
-- `openspec/.extensions/schemas/` contains materialized schema contributions and
-  its generated lookup index.
 - `openspec/changes/<change>/.openspec-gates.json` is the durable, change-local
   required-gate record.
 
-Commit the lockfile. Do not hand-edit generated records or materialized schemas.
+Commit the lockfile. Do not hand-edit generated records.
 Reconciliation removes only files whose recorded ownership and digest still
 match; modified or untracked files are preserved and reported as drift. A gate
 record survives extension disablement and moves with an archived change so a

@@ -69,7 +69,7 @@ describe('archive extension gate enforcement', () => {
         hostCapabilities: { required: [], optional: [] },
       },
       contributes: {
-        workflows: [], schemas: [], commands: [],
+        workflows: [],
         gates: [{
           id: gateId,
           module: 'gate.mjs',
@@ -98,13 +98,23 @@ describe('archive extension gate enforcement', () => {
   }
 
   it('preserves existing archive behavior when no gate record exists', async () => {
-    await createChange('ungated');
+    const changeDir = await createChange('ungated');
+    const proposal = await readFile(path.join(changeDir, 'proposal.md'));
+    const tasks = await readFile(path.join(changeDir, 'tasks.md'));
 
     await new ArchiveCommand().execute('ungated', {
       yes: true, noValidate: true, skipSpecs: true,
     });
 
     await expect(readFile(path.join(projectRoot, 'openspec', 'changes', 'ungated', 'proposal.md')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+    const archiveRoot = path.join(projectRoot, 'openspec', 'changes', 'archive');
+    const archivedName = (await (await import('node:fs/promises')).readdir(archiveRoot))
+      .find((name) => name.endsWith('-ungated'))!;
+    const archivedDir = path.join(archiveRoot, archivedName);
+    expect(await readFile(path.join(archivedDir, 'proposal.md'))).toEqual(proposal);
+    expect(await readFile(path.join(archivedDir, 'tasks.md'))).toEqual(tasks);
+    await expect(readFile(path.join(archivedDir, '.openspec-gates.json')))
       .rejects.toMatchObject({ code: 'ENOENT' });
   });
 

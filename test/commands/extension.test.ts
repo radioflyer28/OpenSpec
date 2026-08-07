@@ -35,8 +35,6 @@ function manifest(id = 'fixture-extension') {
         gateDependencies: [],
         requiredHostCapabilities: [],
       }],
-      schemas: [],
-      commands: [],
       gates: [{
         id: 'fixture.gate',
         module: 'gate.mjs',
@@ -133,6 +131,25 @@ describe('extension lifecycle CLI', () => {
     expect((await readExtensionLockfile(projectRoot)).extensions).toEqual({});
   });
 
+  it('rejects installation when semver matches but the OpenSpec API probe is absent', async () => {
+    const packageRoot = await createExtension('package-extension', manifest('package-extension'));
+
+    await run(['install', '@example/package-extension@1.2.3'], {
+      extensionApiProvider: {},
+      acquire: async () => ({
+        packageRoot,
+        cacheKey: 'abc123',
+        integrity: 'sha512-fixture',
+        name: '@example/package-extension',
+        version: '1.2.3',
+      }),
+    });
+
+    expect(process.exitCode).toBe(1);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('API-bearing OpenSpec distribution'));
+    expect((await readExtensionLockfile(projectRoot)).extensions).toEqual({});
+  });
+
   it('installs an acquired package and records integrity before reconciliation', async () => {
     const packageRoot = await createExtension('package-extension', manifest('package-extension'));
     const reconcile = vi.fn(async () => undefined);
@@ -219,5 +236,18 @@ describe('extension lifecycle CLI', () => {
     await run(['doctor']);
     expect(process.exitCode).toBe(1);
     expect(log).toHaveBeenCalledWith(expect.stringContaining('source unavailable'));
+  });
+
+  it('doctor distinguishes a missing API probe from semantic-version incompatibility', async () => {
+    const extensionRoot = await createExtension();
+    await run(['link', extensionRoot]);
+    process.exitCode = undefined;
+    log.mockClear();
+
+    await run(['doctor', 'fixture-extension'], { extensionApiProvider: {} });
+
+    expect(process.exitCode).toBe(1);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('compatibility=api-unavailable'));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('API-bearing OpenSpec distribution'));
   });
 });

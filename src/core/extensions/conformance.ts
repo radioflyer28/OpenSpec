@@ -1,12 +1,11 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { parseSchema } from '../artifact-graph/schema.js';
 import { loadExtensionManifestV1 } from './manifest.js';
-import { resolveContainedExtensionPath, isExtensionPathContained } from './paths.js';
+import { resolveContainedExtensionPath } from './paths.js';
 import type { ExtensionManifestV1 } from './types.js';
 
 export interface ExtensionConformanceDiagnosticV1 {
-  code: 'manifest' | 'workflow' | 'schema' | 'command' | 'gate';
+  code: 'manifest' | 'workflow' | 'gate';
   path: string;
   message: string;
 }
@@ -17,10 +16,15 @@ export interface ExtensionConformanceResultV1 {
   diagnostics: ExtensionConformanceDiagnosticV1[];
 }
 
-export async function checkExtensionConformanceV1(options: {
+export interface ExtensionConformanceOptionsV1 {
   extensionRoot: string;
   coreVersion: string;
-}): Promise<ExtensionConformanceResultV1> {
+  extensionApiProvider?: unknown;
+}
+
+export async function checkExtensionConformanceV1(
+  options: ExtensionConformanceOptionsV1
+): Promise<ExtensionConformanceResultV1> {
   const diagnostics: ExtensionConformanceDiagnosticV1[] = [];
   let raw: unknown;
   try {
@@ -37,7 +41,13 @@ export async function checkExtensionConformanceV1(options: {
       }],
     };
   }
-  const loaded = loadExtensionManifestV1(raw, options.coreVersion);
+  const loaded = loadExtensionManifestV1(
+    raw,
+    options.coreVersion,
+    Object.prototype.hasOwnProperty.call(options, 'extensionApiProvider')
+      ? options.extensionApiProvider
+      : undefined
+  );
   if (!loaded.manifest) {
     return {
       valid: false,
@@ -57,14 +67,6 @@ export async function checkExtensionConformanceV1(options: {
       diagnostics.push({ code: 'workflow', path: workflow.entry, message: (error as Error).message });
     }
   }
-  for (const command of loaded.manifest.contributes.commands) {
-    try {
-      const entry = await resolveContainedExtensionPath(options.extensionRoot, command.entry);
-      await fs.readFile(entry, 'utf8');
-    } catch (error) {
-      diagnostics.push({ code: 'command', path: command.entry, message: (error as Error).message });
-    }
-  }
   for (const gate of loaded.manifest.contributes.gates) {
     try {
       const modulePath = await resolveContainedExtensionPath(options.extensionRoot, gate.module);
@@ -74,39 +76,6 @@ export async function checkExtensionConformanceV1(options: {
       diagnostics.push({ code: 'gate', path: gate.module, message: (error as Error).message });
     }
   }
-  for (const contribution of loaded.manifest.contributes.schemas) {
-    try {
-      const contributedPath = await resolveContainedExtensionPath(
-        options.extensionRoot,
-        contribution.path
-      );
-      const stat = await fs.stat(contributedPath);
-      const schemaPath = stat.isDirectory()
-        ? path.join(contributedPath, 'schema.yaml')
-        : contributedPath;
-      const schemaDir = path.dirname(schemaPath);
-      const schema = parseSchema(await fs.readFile(schemaPath, 'utf8'));
-      if (schema.name !== contribution.id) {
-        throw new Error(
-          `Contribution id '${contribution.id}' does not match schema name '${schema.name}'.`
-        );
-      }
-      for (const artifact of schema.artifacts) {
-        const templatePath = await fs.realpath(path.resolve(schemaDir, artifact.template));
-        const canonicalDir = await fs.realpath(schemaDir);
-        if (!isExtensionPathContained(canonicalDir, templatePath)) {
-          throw new Error(`Template escapes the contributed schema directory: ${artifact.template}`);
-        }
-      }
-    } catch (error) {
-      diagnostics.push({
-        code: 'schema',
-        path: contribution.path,
-        message: (error as Error).message,
-      });
-    }
-  }
-
   return {
     valid: diagnostics.length === 0,
     manifest: loaded.manifest,
@@ -114,10 +83,9 @@ export async function checkExtensionConformanceV1(options: {
   };
 }
 
-export async function assertExtensionConformanceV1(options: {
-  extensionRoot: string;
-  coreVersion: string;
-}): Promise<ExtensionManifestV1> {
+export async function assertExtensionConformanceV1(
+  options: ExtensionConformanceOptionsV1
+): Promise<ExtensionManifestV1> {
   const result = await checkExtensionConformanceV1(options);
   if (!result.valid || !result.manifest) {
     throw new Error(

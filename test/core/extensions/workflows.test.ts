@@ -4,12 +4,15 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   buildExtensionRegistrySnapshot,
-  normalizeExtensionWorkflows,
   readExtensionReconciliationRecord,
-  reconcileExtensionWorkflows,
+  reconcileProjectExtensionWorkflows,
   updateExtensionLockfile,
   writeExtensionReconciliationRecord,
 } from '../../../src/core/extensions/index.js';
+import {
+  normalizeExtensionWorkflows,
+  reconcileExtensionWorkflows,
+} from '../../../src/core/extensions/workflows.js';
 
 const hostCapabilities = {
   agentDispatch: false,
@@ -39,8 +42,6 @@ function manifest(id: string, workflowId = 'fixture-run') {
         gateDependencies: ['fixture.gate'],
         requiredHostCapabilities: [],
       }],
-      schemas: [],
-      commands: [],
       gates: [],
     },
   };
@@ -90,6 +91,23 @@ describe('extension workflow contributions', () => {
       builtinIds: { workflows: ['apply'] },
     });
   }
+
+  it('is byte-inert when a project has no extension lock or reconciliation record', async () => {
+    const builtInPath = path.join(projectRoot, '.claude', 'commands', 'opsx-apply.md');
+    const builtIn = Buffer.from('byte-stable built-in workflow\n');
+    await mkdir(path.dirname(builtInPath), { recursive: true });
+    await writeFile(builtInPath, builtIn);
+
+    const result = await reconcileProjectExtensionWorkflows(projectRoot, '1.8.0-guardrails.1', {
+      configuredTools: ['claude'],
+      delivery: 'both',
+    });
+
+    expect(result).toBeUndefined();
+    expect(await readFile(builtInPath)).toEqual(builtIn);
+    await expect(readFile(path.join(projectRoot, 'openspec', 'extensions.generated.yaml')))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+  });
 
   it('normalizes enabled workflows and omits disabled, conflicted, and unavailable ones', async () => {
     await addExtension('enabled-extension');

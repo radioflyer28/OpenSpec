@@ -54,8 +54,6 @@ describe('durable extension gates', () => {
       },
       contributes: {
         workflows: [],
-        schemas: [],
-        commands: [],
         gates: gates.map((gate) => ({
           id: gate.id,
           module: `${gate.id}.mjs`,
