@@ -48,6 +48,12 @@ Generated state will move to schema version 2. `events.json` remains the canonic
 
 `run.json`, `assurance.json`, and the new status/report views remain replaceable projections. Larger structured views may be written beneath `reports/`, but they must be reproducible from events plus current OpenSpec and repository evidence. A constant, explicit generated-file registry will define every path that Guardrails owns; cleanup and migration will use this registry rather than filename patterns.
 
+Every gate evaluation replays and validates `events.json` before consulting projections. A projection that is missing, stale, digest-inconsistent, ahead of canonical history, or not reproducible from canonical events yields `error` and blocks archive. Projections can accelerate reads but can never independently satisfy a gate.
+
+Event appends use a cross-process serialization protocol with bounded lock acquisition, stale-lock recovery tied to an owning process or lease, and atomic replacement after re-reading the latest canonical store. An append succeeds only when its unique event is present in the validated resulting store; contention cannot report success for a lost event. Tier 2 adapters must still submit results through this serialized Tier 0 commit boundary.
+
+Before creating or reading generated state, Guardrails resolves the change directory and every existing generated-path ancestor without following a `.guardrails` symlink outside the change. Creation uses a directory owned beneath the resolved change root. A symlink, non-directory collision, or later containment mismatch fails closed without reading, writing, or deleting the external target.
+
 All project-relative references use portable forward-slash identities in records and Node path APIs at filesystem boundaries. Atomic rename-based writes remain mandatory on Windows, macOS, and Linux.
 
 **Alternative considered:** make separate mutable `findings.json`, `debug.json`, `uat.json`, and `release.json` stores authoritative. Rejected because concurrent mutable truths would make recovery and reconciliation harder.
@@ -99,7 +105,11 @@ The plan checker consumes compiled OpenSpec identities and repository context. I
 
 All modes require a current readiness pass before implementation writes. Quick mode may collect less optional context, but it cannot omit evidence required for a readiness conclusion. Changes to controlling artifacts or cited repository evidence invalidate affected results.
 
+Every invocation of `run` refreshes repository inputs and readiness before returning an executable action, including an invocation that resumes an existing run. The report-only setting exists only as an explicit migration compatibility choice; required readiness is the default for new version 2 configuration. A stale or unavailable required result sets `blockedBeforeExecution` and prevents executor dispatch.
+
 Tier 0 exposes deterministic collection plus a read-only recording contract for the independent analysis. Tier 1 and Tier 2 may dispatch isolated analyzers, but use the same result schema.
+
+Tier 1 and Tier 2 repository-analysis adapters are passed through the runner when negotiated. Tier 0 derives changed files deterministically from the current repository or records the limitation as an explicit unknown; absence of caller-supplied paths cannot silently produce an empty impact analysis. Context revisions hash the evidence contents that support every claim.
 
 **Alternative considered:** allow the executor to self-certify readiness during task compilation. Rejected because it would not challenge missing work or unverifiable assumptions independently.
 
@@ -118,6 +128,8 @@ open ──repair evidence──▶ repaired ──read-only verification──�
 
 Every transition is append-only and includes actor, reason, evidence, and source revisions. Repeated checker output reconciles with the same finding; disappearance from a later report does not close it. Relevant source or artifact changes mark prior repair or verification stale and reopen the blocking obligation.
 
+The production `run` and `check` paths compute a material-input revision and invoke the same invalidation rules used by lifecycle helpers. This revision includes controlling OpenSpec artifact digests and all cited repository-evidence digests, not only claim identifiers. Finding verification and UAT acceptance therefore cannot survive a material change merely because a helper was not called by an orchestration path.
+
 `accepted_risk` records technical non-resolution. It requires an explicit human actor and reason and never masquerades as `independently_verified`. The archive gate blocks `open`, `repaired`, stale, and unresolved `human_needed` blocking findings.
 
 **Alternative considered:** infer resolution when a later checker no longer emits a finding. Rejected because tool drift, routing changes, or partial scans could silently erase unresolved risk.
@@ -130,11 +142,15 @@ The debug state machine records hypotheses, experiments, observations, conclusio
 
 Debug mutations still use the existing executor/write-set and Git opt-in policies. Reviewer and verifier roles remain read-only. Resolution of a defect requires regression evidence tied to the original symptom and independent confirmation, or a human-approved exemption when regression automation is genuinely inapplicable.
 
+Debug events model hypotheses, experiments, observations, conclusions, root-cause claims, changed references, unresolved questions, and next actions as distinct records. A root-cause conclusion cites the observations that support it. Active, unresolved, or `human_needed` sessions linked to blocking failures are subordinate archive obligations and cannot disappear behind a passing aggregate check.
+
 **Alternative considered:** extend the normal repair counter indefinitely. Rejected because repairs do not preserve hypotheses or distinguish symptom suppression from root-cause evidence.
 
 ### 7. Model UAT as scenario dispositions linked to findings
 
 `/opsx:uat <change>` projects applicable human scenarios from OpenSpec coverage and `human_needed` findings. It presents one scenario at a time with prerequisites, action, expected observable result, and the four allowed dispositions: `passed`, `failed`, `blocked`, and `accepted_limitation`.
+
+Scenario coverage is canonical event state, not a transient evaluator return value. Readiness/check reconciliation persists the complete current OpenSpec scenario set and explicitly invalidates removed or changed scenarios. UAT always derives its queue from that replayed set plus applicable findings; a required UAT configuration with no projected scenarios is an error unless current evidence establishes that no human scenario applies.
 
 Interactive hosts may collect the response directly. Other Tier 0 hosts print the next scenario and accept a structured human event through the CLI. Evidence attachments are references with digests or stable external identifiers; Guardrails does not copy arbitrary user files into planning artifacts.
 
@@ -154,6 +170,22 @@ Every applicable driver follows the same safety boundary:
 4. Exercise declared exports, binaries, commands, or plugin entry points.
 5. Evaluate version, compatibility, release-note/changeset, and documented-install metadata.
 6. Exercise upgrade and rollback in isolated state when the public contract makes them applicable.
+
+Changed files and release surfaces are derived in production from repository state, OpenSpec metadata, manifests, and explicit configuration; they are not optional caller hints. Configured `surfaces` and `requiredPlatforms` participate in applicability and gate obligations. Repository-policy, mode-selection, compatibility, and rollback evaluations are invoked by the production pipeline rather than existing only as standalone helpers.
+
+Temporary directories isolate outputs, not hostile code. Package build scripts, installed exports, binaries, and configured drivers execute only through a constrained release runner that:
+
+- supplies an allowlisted environment without inherited credentials;
+- does not reveal or mount the original source-workspace path;
+- captures bounded, redacted output suitable for durable evidence;
+- disables lifecycle scripts unless a separately disclosed build command is explicitly authorized;
+- runs public-entry smoke checks out of process;
+- denies network access or publication-capable credentials where the host supports that control; and
+- returns `human_needed` instead of claiming safe non-publication when required isolation cannot be established.
+
+Configured commands remain an explicit user-authorized escape hatch, but their declared authority, environment, source access, network access, and expected outputs are recorded. Command-token filtering is defense in depth and is not treated as a sandbox.
+
+Upgrade and rollback checks validate declared state and public behavior before and after each transition. Merely installing two artifacts does not establish migration or rollback correctness. Extension/plugin checks validate the installed manifest contract and generated workflow discovery through the actual host integration.
 
 Release assurance never publishes or mutates a remote registry. Rollback tests operate only on disposable isolated state. Missing credentials, platforms, baselines, or human environments yield `human_needed` or failure according to configured policy.
 
@@ -182,6 +214,9 @@ The existing `guardrails.assurance` gate remains the single archive obligation. 
 - **Debug logs could grow without convergence** → Scope sessions to concrete failures, reject repeated unchanged experiments, and expose explicit unresolved or human-needed terminal states.
 - **Human acceptance could become a rubber stamp** → Present individual scenarios, require explicit dispositions, keep accepted limitations distinct from passes, and invalidate stale evidence.
 - **Release checks could execute unsafe package scripts** → Run in newly created temporary projects, expose command plans in evidence, use repository configuration for allowed drivers, and never publish automatically.
+- **Temporary directories do not sandbox untrusted code** → Use the constrained runner, an allowlisted environment, out-of-process smoke checks, no original-workspace reference, redaction, and `human_needed` when network or filesystem authority cannot be bounded.
+- **Multiple writers could lose canonical events** → Serialize cross-process appends, re-read under the commit boundary, verify the appended identity after replacement, and stress concurrent writers on every supported platform.
+- **Generated-state symlinks could redirect writes or cleanup** → Resolve and validate every owned ancestor beneath the real change root and reject symlinked or replaced `.guardrails` directories.
 - **Cross-platform behavior may diverge** → Use Node path APIs, portable record identities, disposable platform-native directories, and hosted Linux/macOS/Windows tests for state, UAT references, packaging, and clean install.
 - **Six capabilities increase the initial increment size** → Build them on one shared event/finding foundation and deliver in dependency order with independent tests and checkpoints.
 
@@ -194,4 +229,4 @@ The existing `guardrails.assurance` gate remains the single archive obligation. 
 5. Replace latest-observation findings with lifecycle reconciliation and connect repair, verification, UAT, and gate evaluation.
 6. Add debug and UAT workflows, then release drivers and mode routing.
 7. Run cross-platform compatibility, migration, package, and clean-install matrices against the supported OpenSpec range.
-8. Prepare the companion as a new minor version for private link or packed-artifact installation. Verify the installed artifact and retain the preceding local revision or package artifact for rollback; version 2 event history remains readable and must not be destructively downgraded. Package-registry publication remains deferred.
+8. Prepare the companion as a new minor version for private link or packed-artifact installation. Verify the installed artifact and retain the preceding local revision or package artifact for rollback. Downgrade creates a separate version 1-compatible export or restores into a separate target; it never overwrites or deletes canonical version 2 history. Package-registry publication remains deferred.

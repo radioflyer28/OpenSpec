@@ -16,7 +16,7 @@ When the configured repair limit is exhausted without resolving a blocking failu
 - **THEN** Guardrails resumes that session with its prior hypotheses and experiments rather than creating a duplicate investigation
 
 ### Requirement: Sessions distinguish hypotheses, experiments, observations, and conclusions
-Each debugging session SHALL record testable hypotheses, planned experiments, executed actions, observed results, and the evidence supporting or rejecting each hypothesis. A root-cause conclusion SHALL be distinct from the original symptom.
+Each debugging session SHALL record testable hypotheses, planned experiments, executed actions, observed results, conclusions, root-cause claims, changed evidence references, and the evidence supporting or rejecting each hypothesis. A root-cause conclusion SHALL be distinct from the original symptom and SHALL cite the observations that support it.
 
 #### Scenario: Experiment rejects a hypothesis
 - **WHEN** observed evidence contradicts the active hypothesis
@@ -25,6 +25,10 @@ Each debugging session SHALL record testable hypotheses, planned experiments, ex
 #### Scenario: Root cause is claimed without evidence
 - **WHEN** a participant proposes a root cause that is not supported by a recorded experiment or observation
 - **THEN** the session remains unresolved and requests supporting evidence
+
+#### Scenario: Controlling evidence changes during investigation
+- **WHEN** a source, specification, task, or other evidence reference material to the active investigation changes
+- **THEN** Guardrails records the changed reference and reevaluates affected hypotheses, conclusions, and next actions
 
 ### Requirement: Repeated unsuccessful experiments are detected
 Guardrails SHALL identify materially repeated experiments against unchanged relevant state and SHALL require a new hypothesis, changed evidence, or human direction before continuing.
@@ -55,3 +59,6 @@ A debugging session resolving a behavior defect SHALL require a relevant regress
 - **WHEN** implementation changes appear to remove the symptom but no applicable regression evidence exists
 - **THEN** the debugging session remains unresolved
 
+#### Scenario: Archive requested with unresolved debugging
+- **WHEN** a blocking failure has an active, unresolved, or human-needed debugging session
+- **THEN** archive remains blocked and reports the investigation action still required

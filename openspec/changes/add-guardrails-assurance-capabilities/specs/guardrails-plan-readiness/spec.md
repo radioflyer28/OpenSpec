@@ -5,7 +5,7 @@ Establishes whether an OpenSpec change is sufficiently complete, coherent, and v
 ## ADDED Requirements
 
 ### Requirement: Execution begins with independent readiness evaluation
-Before `/opsx:run` executes implementation tasks, Guardrails SHALL independently evaluate the current OpenSpec proposal, specifications, design, tasks, and relevant repository evidence. The evaluator SHALL be read-only and its result SHALL NOT be satisfied by executor claims.
+Before `/opsx:run` executes or resumes implementation tasks, Guardrails SHALL independently evaluate the current OpenSpec proposal, specifications, design, tasks, and relevant repository evidence. Required readiness SHALL be the default for new version 2 configurations. The evaluator SHALL be read-only and its result SHALL NOT be satisfied by executor claims.
 
 #### Scenario: Ready change proceeds to execution
 - **WHEN** every blocking readiness check passes for the current artifact revision
@@ -14,6 +14,10 @@ Before `/opsx:run` executes implementation tasks, Guardrails SHALL independently
 #### Scenario: Unready change is stopped before implementation
 - **WHEN** a blocking readiness check fails or cannot be established
 - **THEN** Guardrails stops before implementation writes and reports the unresolved issue with remediation guidance
+
+#### Scenario: Existing run is resumed after controlling input changes
+- **WHEN** a run already exists and a controlling OpenSpec or repository input has changed since its passing readiness evaluation
+- **THEN** Guardrails recomputes readiness and blocks implementation writes until the current result passes
 
 ### Requirement: Requirements, tasks, and evidence form a complete chain
 The readiness evaluator SHALL establish that every requirement and acceptance scenario maps to implementation tasks and planned observable evidence, and that the complete task set covers the declared change goal without relying on unmapped executor work.
@@ -58,4 +62,3 @@ Guardrails SHALL associate readiness evidence with the exact controlling OpenSpe
 #### Scenario: Readiness records use portable paths
 - **WHEN** the same change is evaluated on Windows, macOS, or Linux
 - **THEN** evidence references resolve to the same logical artifacts using platform-correct paths
-

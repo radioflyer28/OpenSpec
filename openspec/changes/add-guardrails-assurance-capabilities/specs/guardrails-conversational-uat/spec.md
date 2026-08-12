@@ -5,7 +5,7 @@ Guides human acceptance scenario by scenario and records durable evidence for be
 ## ADDED Requirements
 
 ### Requirement: UAT presents one acceptance scenario at a time
-For each applicable human acceptance scenario, Guardrails SHALL present the scenario identity, prerequisites, action to perform, expected observable result, and permitted dispositions before requesting a decision.
+For each applicable human acceptance scenario projected from the current canonical OpenSpec scenario set and human-needed findings, Guardrails SHALL present the scenario identity, prerequisites, action to perform, expected observable result, and permitted dispositions before requesting a decision.
 
 #### Scenario: Human begins an acceptance session
 - **WHEN** a change has one or more unresolved human acceptance scenarios
@@ -14,6 +14,14 @@ For each applicable human acceptance scenario, Guardrails SHALL present the scen
 #### Scenario: Session resumes after interruption
 - **WHEN** a prior UAT session contains completed and unresolved scenarios
 - **THEN** Guardrails preserves completed dispositions and resumes at the next unresolved scenario
+
+#### Scenario: OpenSpec declares human acceptance scenarios
+- **WHEN** current OpenSpec coverage contains applicable human scenarios
+- **THEN** Guardrails persists those scenarios in canonical history and includes each unresolved scenario in the real UAT workflow
+
+#### Scenario: Required UAT unexpectedly projects no scenarios
+- **WHEN** human acceptance is required but no current evidence establishes either an applicable scenario or that human acceptance is not applicable
+- **THEN** Guardrails fails closed with a projection error instead of satisfying the gate with an empty queue
 
 ### Requirement: UAT records evidence and explicit disposition
 Each scenario SHALL be recorded as `passed`, `failed`, `blocked`, or `accepted_limitation` with human-provided notes and evidence references where available. A passing or accepted-limitation disposition SHALL require explicit human confirmation.
@@ -55,3 +63,6 @@ Guardrails SHALL keep a required human acceptance gate unresolved while any appl
 - **WHEN** UAT evidence created on one supported platform is viewed on another
 - **THEN** Guardrails resolves portable project-relative references or reports unavailable external evidence without losing the recorded disposition
 
+#### Scenario: Accepted implementation or requirement changes materially
+- **WHEN** a material controlling OpenSpec artifact or cited implementation revision changes after a UAT disposition
+- **THEN** Guardrails invalidates the affected acceptance and requires human retest before archive
