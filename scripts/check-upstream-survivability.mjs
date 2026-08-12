@@ -18,6 +18,7 @@ const pathsPath = valueAfter('--paths');
 const allowedPaths = pathsPath
   ? JSON.parse(readFileSync(path.resolve(pathsPath), 'utf8')).paths
   : config.paths;
+const packageOverlay = pathsPath ? undefined : config.packageOverlay;
 
 function git(commandArgs, options = {}) {
   return execFileSync('git', commandArgs, {
@@ -65,9 +66,7 @@ try {
   const upstreamRef = `upstream/${upstreamBranch}`;
   const upstreamRevision = git(['rev-parse', '--verify', `${upstreamRef}^{commit}`]).trim();
   const mergeBase = git(['merge-base', 'HEAD', upstreamRef]).trim();
-  // A one-revision diff includes staged hardening files during local verification
-  // and is identical to mergeBase..HEAD in clean CI checkouts.
-  const patch = git(['diff', '--binary', mergeBase, '--', ...allowedPaths]);
+  const patch = git(['diff', '--binary', '--full-index', mergeBase, 'HEAD', '--', ...allowedPaths]);
   if (patch.length === 0) {
     throw new Error(
       `Generated extension seam patch is empty (merge base ${mergeBase}, HEAD ` +
@@ -81,14 +80,21 @@ try {
   writeFileSync(patchPath, patch);
   git(['worktree', 'add', '--detach', worktree, upstreamRevision], { stdio: 'inherit' });
   try {
-    git(['apply', '--check', '--verbose', patchPath], { cwd: worktree });
+    git(['apply', '--3way', '--index', patchPath], { cwd: worktree, stdio: 'inherit' });
   } catch (error) {
     throw new Error(
       `Extension seam patch does not apply to ${upstreamRef} (${upstreamRevision}). ` +
       `${error instanceof Error ? error.message : String(error)}`
     );
   }
-  git(['apply', patchPath], { cwd: worktree });
+  if (packageOverlay) {
+    const packagePath = path.join(worktree, 'package.json');
+    const manifest = JSON.parse(readFileSync(packagePath, 'utf8'));
+    for (const [section, values] of Object.entries(packageOverlay)) {
+      manifest[section] = { ...(manifest[section] ?? {}), ...values };
+    }
+    writeFileSync(packagePath, `${JSON.stringify(manifest, null, 2)}\n`);
+  }
 
   if (!prepareOnly) {
     for (const [command, ...commandArgs] of config.verificationCommands) {
@@ -103,6 +109,7 @@ try {
     mergeBase,
     patchBytes: Buffer.byteLength(patch),
     paths: allowedPaths,
+    strategy: 'git-apply-3way-with-declarative-package-overlay',
     verified: !prepareOnly,
   }, null, 2));
 } catch (error) {

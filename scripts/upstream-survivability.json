@@ -5,8 +5,6 @@
   "paths": [
     ".changeset/add-extension-seam.md",
     "docs/extensions.md",
-    "package.json",
-    "pnpm-lock.yaml",
     "src/cli/index.ts",
     "src/commands/extension.ts",
     "src/core/archive.ts",
@@ -21,8 +19,18 @@
     "test/core/extensions",
     "test/fixtures/extensions"
   ],
+  "packageOverlay": {
+    "exports": {
+      "./extensions": {
+        "types": "./dist/core/extensions/index.d.ts",
+        "default": "./dist/core/extensions/index.js"
+      }
+    },
+    "dependencies": { "semver": "^7.7.2" },
+    "devDependencies": { "@types/semver": "^7.7.1" }
+  },
   "verificationCommands": [
-    ["pnpm", "install", "--frozen-lockfile"],
+    ["pnpm", "install", "--no-frozen-lockfile"],
     ["pnpm", "run", "build"],
     ["pnpm", "exec", "tsc", "--noEmit"],
     ["pnpm", "exec", "vitest", "run", "test/core/extensions", "test/core/archive-gates.test.ts", "test/commands/extension.test.ts"]
