@@ -106,9 +106,9 @@
 
 ## 11. Remediate Independent Review Findings
 
-- [ ] 11.1 Add RED adversarial tests proving archive cannot be satisfied by forged or stale `run.json` and `assurance.json`, then make the gate replay canonical events, validate reproducible projections, and fail closed on missing, corrupt, or divergent canonical state.
-- [ ] 11.2 Add a multi-process contention test in which every successful unique append survives exactly once, then serialize event commits with bounded cross-process locking, safe stale-lock handling, re-read-before-write, and post-commit event verification.
-- [ ] 11.3 Add symbolic-link, junction where supported, ancestor-replacement, and cleanup probes for `.guardrails/`, then enforce realpath/lstat containment for every generated-state read, write, migration, restoration, and deletion.
+- [x] 11.1 Add RED adversarial tests proving archive cannot be satisfied by forged or stale `run.json` and `assurance.json`, then make the gate replay canonical events, validate reproducible projections, and fail closed on missing, corrupt, or divergent canonical state.
+- [x] 11.2 Add a multi-process contention test in which every successful unique append survives exactly once, then serialize event commits with bounded cross-process locking, safe stale-lock handling, re-read-before-write, and post-commit event verification.
+- [x] 11.3 Add symbolic-link, junction where supported, ancestor-replacement, and cleanup probes for `.guardrails/`, then enforce realpath/lstat containment for every generated-state read, write, migration, restoration, and deletion.
 - [ ] 11.4 Add stale-resume tests that change requirements, scenarios, tasks, and cited repository evidence after readiness passes, make required readiness the version 2 default, and recompute current context and readiness before every execution or resume write.
 - [ ] 11.5 Persist current OpenSpec scenario coverage through canonical events, derive the real UAT queue from replayed scenarios plus findings, fail closed on unexplained empty required UAT, and invalidate affected dispositions after material changes.
 - [ ] 11.6 Wire material-revision invalidation into production `run` and `check` for repaired or verified findings and UAT evidence, including controlling OpenSpec digests and cited repository-evidence digests.
