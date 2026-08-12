@@ -59,12 +59,20 @@ The Guardrails assurance gate SHALL fail closed while any blocking finding is op
 - **WHEN** replaceable run or assurance projections report success but canonical Guardrails history remains incomplete, stale, corrupt, or cannot reproduce those projections
 - **THEN** archive is blocked and reports a canonical-state error
 
+#### Scenario: Legacy canonical history disagrees with projections
+- **WHEN** a supported version 1 canonical history and its replaceable run or assurance projections disagree
+- **THEN** archive is blocked until Guardrails can reconcile or safely migrate the canonical history, regardless of which projection reports success
+
 ### Requirement: Canonical assurance history is durable and workspace-contained
 Guardrails SHALL preserve every successfully appended assurance event under concurrent writers and SHALL read, write, migrate, restore, or remove generated state only within the resolved active change workspace. Version compatibility operations SHALL preserve canonical version 2 history without destructive replacement.
 
 #### Scenario: Concurrent roles append distinct results
 - **WHEN** multiple supported execution roles append unique events concurrently
 - **THEN** every successful append is present exactly once in the replayable canonical history
+
+#### Scenario: A live writer exceeds the normal lock interval
+- **WHEN** a live event writer holds serialization longer than the normal lock interval while another writer attempts to append
+- **THEN** Guardrails preserves ownership safely or rejects a writer without allowing both writers to report success for history that omits either event
 
 #### Scenario: Generated-state directory redirects outside the change
 - **WHEN** the generated-state path is a symbolic link, junction, replaced ancestor, or other path that resolves outside the active change workspace

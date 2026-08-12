@@ -19,6 +19,10 @@ Guardrails SHALL derive current changed files from repository evidence and gener
 - **WHEN** a Tier 1 or Tier 2 host provides a read-only repository-analysis adapter
 - **THEN** Guardrails invokes that adapter through the runner and validates the same evidence and result schema used by Tier 0
 
+#### Scenario: Feature branch work is already committed
+- **WHEN** the current workspace is clean but the active branch contains commits relative to its configured or discovered comparison base
+- **THEN** Guardrails includes those committed changes in impact analysis or reports the comparison base as unresolved instead of producing an empty impact set
+
 ### Requirement: Context findings are traceable and confidence-aware
 Every generated context claim SHALL reference inspectable repository evidence and SHALL distinguish directly observed facts from inferred impact. Uncertain or conflicting findings SHALL be reported as such.
 
