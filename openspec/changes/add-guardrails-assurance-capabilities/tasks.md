@@ -95,9 +95,9 @@
 ## 10. Verify Convergence, Portability, and Release Readiness
 
 - [x] 10.1 Run companion build, type-check, lint, full unit suite, event replay, migration, readiness, context, finding, debug, UAT, release, status, and gate tests.
-- [ ] 10.2 Run end-to-end Tier 0 scenarios from incomplete plan through readiness remediation, execution, failed review, repair exhaustion, debugging, regression proof, independent verification, UAT, release assurance, and archive.
-- [ ] 10.3 Run Tier 1 and Tier 2 adapter tests proving isolated or parallel execution changes scheduling but not schemas, lifecycle authorization, evidence requirements, or gate outcomes.
-- [ ] 10.4 Run the version 1 fixture migration and downgrade-safety matrix, including interruption, replay repair, corrupt records, stale evidence, and restoration of the previous companion version.
+- [x] 10.2 Run end-to-end Tier 0 scenarios from incomplete plan through readiness remediation, execution, failed review, repair exhaustion, debugging, regression proof, independent verification, UAT, release assurance, and archive.
+- [x] 10.3 Run Tier 1 and Tier 2 adapter tests proving isolated or parallel execution changes scheduling but not schemas, lifecycle authorization, evidence requirements, or gate outcomes.
+- [x] 10.4 Run the version 1 fixture migration and downgrade-safety matrix, including interruption, replay repair, corrupt records, stale evidence, and restoration of the previous companion version.
 - [ ] 10.5 Run hosted Linux, macOS, and Windows matrices for portable references, atomic state, debug resume, UAT evidence, temporary release projects, clean installs, and CLI entry points.
 - [ ] 10.6 Run extension conformance and all contributed workflow-generation tests against every supported API-bearing OpenSpec version and a fresh official-upstream patch build.
 - [x] 10.7 Pack the companion release candidate, inspect its published file list and dependency metadata, install it with the released core seam in a clean project, and exercise all five contributed workflows.
