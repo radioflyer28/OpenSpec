@@ -56,6 +56,10 @@ For changes affecting stored data, configuration, protocols, or installed state,
 - **WHEN** previous and candidate artifacts install but declared state preservation and public behavior have not been observed across upgrade and rollback
 - **THEN** Guardrails keeps the upgrade or rollback obligation unresolved
 
+#### Scenario: No real state contract is declared
+- **WHEN** an upgrade or rollback check can observe only verifier-created sentinel data rather than package- or project-declared state and behavior
+- **THEN** Guardrails keeps state preservation unresolved and reports the missing state contract
+
 ### Requirement: Release assurance avoids unapproved external publication
 Release verification SHALL operate through a constrained runner with a minimal allowlisted environment, redacted durable output, no implicit original-workspace access, and out-of-process execution of candidate code. It SHALL NOT expose publication credentials, publish packages, create releases, modify remote registries, or perform destructive rollback against user data without separate explicit authorization. When the host cannot bound required filesystem, environment, or network authority, Guardrails SHALL report `human_needed` rather than claim safe non-publication.
 
@@ -70,6 +74,10 @@ Release verification SHALL operate through a constrained runner with a minimal a
 #### Scenario: Configured driver requests broader authority
 - **WHEN** a configured release command requires source, credential, network, or external mutation authority beyond the constrained runner
 - **THEN** Guardrails records the requested authority and requires separate explicit authorization without treating command-token filtering as isolation
+
+#### Scenario: Runner can constrain only the working directory
+- **WHEN** candidate code retains unbounded host filesystem or network authority despite running from a temporary working directory
+- **THEN** Guardrails reports `human_needed` and does not claim constrained or non-publication-safe execution
 
 ### Requirement: Required release evidence is portable or explicitly escalated
 Applicable deterministic release checks SHALL run equivalently on supported operating systems. When a required platform, registry, credential, or human environment is unavailable, Guardrails SHALL return `human_needed` or fail according to policy rather than silently passing.

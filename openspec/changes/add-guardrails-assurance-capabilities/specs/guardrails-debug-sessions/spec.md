@@ -55,6 +55,10 @@ A debugging session resolving a behavior defect SHALL require a relevant regress
 - **WHEN** the root cause is corrected and the associated regression check passes
 - **THEN** Guardrails may resolve the debugging session after independent verification of the evidence
 
+#### Scenario: Executor attempts to close its own debugging session
+- **WHEN** the executor supplies a regression reference without a distinct authorized verifier identity and current evidence digest
+- **THEN** Guardrails keeps the debugging session unresolved and identifies the missing independent verification
+
 #### Scenario: Fix lacks regression proof
 - **WHEN** implementation changes appear to remove the symptom but no applicable regression evidence exists
 - **THEN** the debugging session remains unresolved
