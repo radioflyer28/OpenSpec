@@ -12,6 +12,9 @@ Guardrails can validate artifact structure and execute an assurance pipeline, bu
 - Conditionally verify distributable packages, CLIs, plugins, and public artifacts by packing, inspecting, clean-installing, exercising public entry points, checking release metadata, and evaluating upgrade and rollback evidence.
 - Contribute `/opsx:debug <change> [--finding <id>]` for starting or resuming scientific investigations and `/opsx:uat <change>` for guided human acceptance; plan readiness and release assurance remain automatic stages of `/opsx:run` and `/opsx:check`.
 - Keep all generated analysis, debugging, finding, UAT, and release records under `.guardrails/`, subordinate to OpenSpec requirements, design, and tasks.
+- Make canonical assurance history authoritative at archive time, preserve every concurrent event, and prevent generated-state paths from escaping the active change workspace.
+- Recompute readiness and invalidate finding, UAT, and release evidence whenever controlling OpenSpec or repository inputs materially change.
+- Run release candidates with explicitly bounded authority and report `human_needed` when the host cannot provide the isolation needed to establish a release claim safely.
 - Keep the implementation in `openspec-guardrails` and use the existing generic extension and archive-gate APIs; this increment does not expand OpenSpec core with Guardrails-specific policy.
 - Exclude the deferred Little Coder mechanisms, additional specialist-checker backlog, and GSD phase, milestone, roadmap, workstream, or persistent project-state machinery.
 
@@ -35,5 +38,6 @@ None.
 - Primarily affects the separately maintained `openspec-guardrails` companion package: workflow instructions, schemas, generated records, execution graph compilation, assurance routing, CLI commands, gate evaluation, and reports.
 - Adds generated records beneath `openspec/changes/<change>/.guardrails/` while preserving OpenSpec artifacts as the sole human-maintained planning truth.
 - May invoke repository search, deterministic tests, packaging tools, clean temporary installations, and human interaction when the corresponding capability is applicable and supported.
+- Treats package code and configured release commands as untrusted execution: credentials, source-workspace access, publication authority, and persisted command output must be minimized or explicitly authorized.
 - Requires portable path handling and equivalent assurance behavior on Linux, macOS, and Windows; unsupported optional host capabilities must fall back without weakening required outcomes.
 - Depends on the Guardrails v1 extension seam, Tier 0 protocol, stable task identity, reconciliation, and archive-gate behavior established by the preceding Guardrails changes.
