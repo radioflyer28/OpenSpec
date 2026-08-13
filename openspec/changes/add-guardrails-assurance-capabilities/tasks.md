@@ -120,7 +120,7 @@
 - [x] 11.12 Derive Tier 0 changed files deterministically from uncommitted and committed branch work, report explicit base-selection unknowns when impact cannot be established, include cited evidence digests in context revisions, and pass negotiated Tier 1/Tier 2 repository-analysis adapters through the runner.
 - [x] 11.13 Repair the active core branch upstream-survivability command to test only the maintained generic seam, exclude regenerated lockfile noise, use the proven three-way application strategy, and verify it against current official upstream.
 - [x] 11.14 Correct the assurance capability test map to reference only existing tests and semantically established scenario coverage, add automated consistency checks, and record the unavailable historical fail-first commit evidence as `human_needed` without reconstructing or fabricating RED evidence.
-- [ ] 11.15 Run build, type-check, lint, full tests, conformance, canonical replay, lease-expiry contention, ancestor-replacement, staleness, UAT, debug independence, constrained-release escape, downgrade, actual-candidate clean-install, and upstream-survivability regression suites before requesting the independent re-review in task 10.8.
+- [x] 11.15 Run build, type-check, lint, full tests, conformance, canonical replay, lease-expiry contention, ancestor-replacement, staleness, UAT, debug independence, constrained-release escape, downgrade, actual-candidate clean-install, and upstream-survivability regression suites before requesting the independent re-review in task 10.8.
 
 ## 12. Remediate Independent Re-Review Findings
 
@@ -135,4 +135,17 @@
 - [x] 12.9 Replace synthetic upgrade sentinels with driver- or project-declared state contracts and test actual state plus public behavior across previous-version upgrade and rollback, escalating unavailable or irreversible evidence for human disposition.
 - [x] 12.10 Pack the actual companion release candidate, inspect its files and dependency metadata, install it with the supported core seam in a clean project, and prove all five contributed workflows are discovered and executable from the installed artifact.
 - [x] 12.11 Correct the assurance test map against the re-review probes and add semantic assertions for the claimed concurrency, containment, staleness, retest, constrained-runner, upgrade-state, and installed-workflow evidence while retaining historical RED provenance as `human_needed`.
-- [ ] 12.12 Run every re-review adversarial probe plus the complete companion, core-seam, conformance, migration, upstream-survivability, and local release-install suites; record exact evidence and leave hosted cross-platform or historical fail-first gaps unresolved rather than claiming coverage.
+- [x] 12.12 Run every re-review adversarial probe plus the complete companion, core-seam, conformance, migration, upstream-survivability, and local release-install suites; record exact evidence and leave hosted cross-platform or historical fail-first gaps unresolved rather than claiming coverage.
+
+## Local Verification Evidence — 2026-08-13
+
+- Companion candidate: commits `d993f1a`, `1eab098`, and `bccb450` on `codex/harden-guardrails-maintainability`.
+- `npm run build`, `npm run typecheck`, and `npm run lint`: passed in `openspec-guardrails`.
+- `npm test`: 38 test files passed; 159 tests passed. This complete suite includes canonical replay, live-lease contention, ancestor-replacement containment, readiness staleness, finding/UAT lifecycle, independent debug closure, constrained-runner probes, v1 migration and compatibility export, actual packed-candidate installation, and five-workflow host discovery.
+- `npm run conformance`: 1 test file passed; 4 conformance tests passed.
+- OpenSpec core `pnpm run build`, `pnpm exec tsc --noEmit`, and `pnpm run lint`: passed.
+- Core seam and survivability unit suite: 9 test files passed; 64 tests passed, covering extension lifecycle, manifests, lockfiles, workflows, gates, archive enforcement, and the survivability script.
+- `pnpm run check:extension-seam`: passed with no budget violations.
+- `openspec validate add-guardrails-assurance-capabilities --strict`: passed.
+- `pnpm run check:upstream-survivability`: passed against official upstream revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the maintained patch applied with the three-way strategy and all 8 upstream-worktree seam files passed (61 tests).
+- Intentionally unresolved: hosted Linux/macOS/Windows evidence (8.10 and 10.5), historical fail-first provenance recorded as `human_needed`, genuinely independent re-review (10.8), and private minor-version preparation gated on those prerequisites (10.9).
