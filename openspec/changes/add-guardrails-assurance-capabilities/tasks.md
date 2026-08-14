@@ -153,6 +153,17 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - [x] 13.10 Run build, type-check, lint, full companion tests, conformance, core-seam tests, installed private-artifact verification, upstream-survivability checks, and available Linux, macOS, and Windows tests; record exact evidence and leave unavailable hosted evidence unresolved.
 - [ ] 13.11 Request a fresh independent code, security-boundary, maintainability, and goal review against the accepted threat model; disposition every blocking finding before private version preparation.
 
+## 14. Remediate Independent Final Review Findings
+
+- [ ] 14.1 Add failing ordinary-caller probes for caller-selected reviewer and verifier provenance, then remove privileged stage selection from generic CLI and result APIs and accept technical verification only through an orchestrator-dispatched role-result channel.
+- [ ] 14.2 Add a structured reviewer finding-result contract that derives stable identity from provider, rule, and logical scope, reconciles reruns without caller-selected canonical IDs, and preserves existing lifecycle transitions.
+- [ ] 14.3 Add failing backdated RED and caller-authored source-state probes, then validate RED-before-repair and GREEN-after-repair using canonical event order and bind GREEN to the orchestrator-derived current material revision.
+- [ ] 14.4 Add a production run/check regression that changes source or cited evidence after debug resolution, then mark the verification stale, reopen the session, and require new GREEN evidence plus a new verifier-stage confirmation.
+- [ ] 14.5 Add run-status projection-tampering tests and make JSON and human output report an explicit blocking integrity error without presenting the run or assurance as complete or passing.
+- [ ] 14.6 Preserve and merge release-applicability and unresolved comparison-base checks through candidate execution so a successful artifact check cannot erase prior `human_needed` evidence.
+- [ ] 14.7 Replace the release compatibility range shortcut with standards-compliant semver evaluation, fail closed on invalid ranges, and cover caret, tilde, comparator, prerelease, incompatible-major, and malformed inputs.
+- [ ] 14.8 Run focused defect probes, full companion verification, conformance, installed-artifact checks, core seam tests, strict OpenSpec validation, and upstream survivability; record exact results and leave tasks 10.8 and 13.11 open for a fresh independent re-review.
+
 ## De-complexity Audit Evidence — 2026-08-13
 
 - Audit target: OpenSpec `3d1b9eb665148bb2b30141a12cd4d901b448ab50` and companion `bccb4501a48f04b01063077f26d89e57377ad899`.
@@ -160,6 +171,13 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - Audit-time companion type-check and lint passed; all 159 companion tests passed after sandbox-dependent release tests were rerun with local cache and loopback access.
 - Audit-time OpenSpec extension-seam suites passed 43 tests and the seam-budget check passed.
 - No implementation remediation is represented as complete by this audit; section 13 remains required.
+
+## Independent Final Review Evidence — 2026-08-14
+
+- Review targets: OpenSpec `381422646c3f0d7dca4b7a2e29a2e4dccf15d5f3` and companion `eaa94988f4315c568fd518e917396368e2bd5718`.
+- Independent verdict: `BLOCK`; the architectural de-complexification was accepted, while seven assurance defects remained in provenance, canonical regression chronology, debug staleness, status integrity, release-impact preservation, stable reviewer finding identity, and semver compatibility evaluation.
+- The review independently passed the companion suites, core seam tests, strict change validation, and upstream-survivability check, and reproduced five defect scenarios with disposable probes.
+- Hosted Linux and Windows matrices remain separately tracked by tasks 8.10 and 10.5. Tasks 10.8 and 13.11 remain incomplete until the section 14 remediations receive a fresh independent re-review.
 
 ## De-complexity Implementation Evidence — 2026-08-13
 
