@@ -102,7 +102,7 @@
 - [x] 10.6 Run extension conformance and all contributed workflow-generation tests against every supported API-bearing OpenSpec version and a fresh official-upstream patch build.
 - [x] 10.7 Pack the companion release candidate, inspect its published file list and dependency metadata, install the actual candidate with the released core seam in a clean project, and exercise all five contributed workflows through installed host discovery.
 - [x] 10.8 After tasks 15.1 and 15.2 pass, run one bounded independent code, accepted-security-boundary, maintainability, requirement-to-scenario, and final-goal acceptance review. The review may block only for a reproducible violation of a current requirement within the frozen threat model with an observable impact; record speculative hardening, new features, full-GSD administration, and unqualified-host concerns as future work rather than reopening this increment.
-- [ ] 10.9 After task 10.8 passes, privately link or install the verified OpenSpec GSD companion in the user's macOS environment, run extension doctor and installed-interface diagnostics, and smoke all five contributed workflows plus the `gsd.assurance` archive gate. Do not publish to a package registry.
+- [x] 10.9 After task 10.8 passes, privately link or install the verified OpenSpec GSD companion in the user's macOS environment, run extension doctor and installed-interface diagnostics, and smoke all five contributed workflows plus the `gsd.assurance` archive gate. Do not publish to a package registry.
 
 ## 11. Remediate Independent Review Findings
 
@@ -261,3 +261,12 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - Independent verification passed the focused suite (4 files, 48 tests) and the full build/test suite (36 files, 151 tests). The review worktree remained clean.
 - Broader detection of additional indirect launcher types was classified as future hardening, not a failure of this increment's requirements.
 - Task 10.8 is complete. Task 10.9 may proceed against companion revision `3e2adef7021a38e5983c053f4cd57106276e50f8`.
+
+## Private macOS Installation Evidence — 2026-08-14
+
+- Linked companion revision `3e2adef7021a38e5983c053f4cd57106276e50f8` into the user's OpenSpec project with `openspec extension link /Users/akriz/code/openspec-guardrails`; no package registry was contacted and no package was published.
+- `openspec extension list` reported `gsd@0.1.0` enabled and compatible with five workflows and one gate. `openspec extension doctor gsd` reported a valid manifest, compatible core range, no conflicts, and successful reconciliation. Unavailable optional agent-dispatch, parallelism, worktree, and Git capabilities were reported diagnostically; Tier 0 remained available.
+- Installed-entry diagnostics reported CLI version `0.1.0` and generated the five owned Codex workflow skills: `run`, `check`, `run-status`, `debug`, and `uat`.
+- In a disposable macOS project, `run`, `check`, and `run-status` executed through the linked companion. A required UAT scenario was presented and an intentional disposable failure was recorded; `debug` then opened the linked scientific-debugging session.
+- A disposable archive attempt invoked `gsd.assurance`, blocked the incomplete run, cited canonical `.openspec-gsd/events.json` and `assurance.json` digests, and returned remediation guidance. This established installed archive-gate discovery and fail-closed behavior without overriding or weakening the gate.
+- All five contributed workflows and `gsd.assurance` were exercised from the private link. Task 10.9 is complete.
