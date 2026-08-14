@@ -1,8 +1,8 @@
 # Extension Seam Maintenance
 
 This document records how the maintained OpenSpec fork carries the generic
-extension seam while continuing to consume official OpenSpec updates. Guardrails
-policy belongs in the separate `openspec-guardrails` repository; this fork owns
+extension seam while continuing to consume official OpenSpec updates. OpenSpec GSD
+policy belongs in the separate `openspec-gsd` repository; this fork owns
 only the generic lifecycle, workflow, compatibility, and archive-gate contract.
 
 ## Hardening baseline
@@ -73,23 +73,23 @@ truth.
 ## Distribution identity
 
 Until the extension seam is available in an official OpenSpec release, fork
-packages use a `-guardrails.N` prerelease version and identify
+packages use a `-gsd.N` prerelease version and identify
 `radioflyer28/OpenSpec` as their package source. They must never be published as
 the equivalent official stable version. Registry-installed extensions retain
 their requested package spec, resolved version, cache key, and package-manager
 integrity in `openspec/extensions.lock.yaml`; linked development extensions are
 identified by their canonicalized link path and manifest version.
 
-The first API-bearing fork line is `1.8.0-guardrails.1`. Compatibility also
+The first API-bearing fork line is `1.8.0-gsd.1`. Compatibility also
 requires the public `OPEN_SPEC_EXTENSION_API_V1` feature marker, so semver alone
 cannot cause an official API-incompatible package to be accepted.
 
 Install or upgrade the fork explicitly and confirm its prerelease identity:
 
 ```bash
-npm install --global github:radioflyer28/OpenSpec#v1.8.0-guardrails.1
+npm install --global github:radioflyer28/OpenSpec#v1.8.0-gsd.1
 openspec --version
-openspec extension doctor guardrails
+openspec extension doctor gsd
 ```
 
 After the seam ships officially, replace the GitHub fork dependency with the

@@ -16,6 +16,6 @@ describe('generic extension integration boundaries', () => {
     expect(update).not.toContain("./extensions/workflows.js");
     expect(archive).toContain('enforceExtensionArchiveGates');
     expect(archive).not.toContain('evaluateRequiredGates');
-    expect(production).not.toContain('openspec-guardrails');
+    expect(production).not.toContain('openspec-gsd');
   });
 });

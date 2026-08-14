@@ -65,7 +65,7 @@ describe('extension lockfile', () => {
           ...registryEntry('0.1.0'),
           source: {
             kind: 'registry',
-            spec: 'openspec-guardrails@0.1.0',
+            spec: 'example-extension@0.1.0',
           },
           integrity: 'sha512-published-package',
           cacheKey: 'sha512-published-package',
@@ -74,7 +74,7 @@ describe('extension lockfile', () => {
     });
 
     expect((await readExtensionLockfile(projectRoot)).extensions['fixture-extension']).toMatchObject({
-      source: { kind: 'registry', spec: 'openspec-guardrails@0.1.0' },
+      source: { kind: 'registry', spec: 'example-extension@0.1.0' },
       version: '0.1.0',
       integrity: 'sha512-published-package',
       cacheKey: 'sha512-published-package',

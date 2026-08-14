@@ -154,7 +154,7 @@ describe('ExtensionManifestV1', () => {
             }],
       };
 
-      const result = loadExtensionManifestV1(input, '1.8.0-guardrails.1');
+      const result = loadExtensionManifestV1(input, '1.8.0-gsd.1');
 
       expect(result.manifest).toBeUndefined();
       expect(result.diagnostics).toContainEqual(
@@ -174,7 +174,7 @@ describe('ExtensionManifestV1', () => {
       gates: input.contributes.gates,
     };
 
-    const result = loadExtensionManifestV1(input, '1.8.0-guardrails.1');
+    const result = loadExtensionManifestV1(input, '1.8.0-gsd.1');
 
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest?.contributes).toMatchObject(input.contributes);

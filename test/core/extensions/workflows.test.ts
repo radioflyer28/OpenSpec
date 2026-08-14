@@ -98,7 +98,7 @@ describe('extension workflow contributions', () => {
     await mkdir(path.dirname(builtInPath), { recursive: true });
     await writeFile(builtInPath, builtIn);
 
-    const result = await reconcileProjectExtensionWorkflows(projectRoot, '1.8.0-guardrails.1', {
+    const result = await reconcileProjectExtensionWorkflows(projectRoot, '1.8.0-gsd.1', {
       configuredTools: ['claude'],
       delivery: 'both',
     });
