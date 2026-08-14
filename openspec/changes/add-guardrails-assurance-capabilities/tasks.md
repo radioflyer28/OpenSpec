@@ -101,7 +101,7 @@
 - [x] 10.5 Replace the hosted multi-platform completion requirement with the macOS qualification in task 15.2 while retaining portable identities as a design constraint. Defer hosted Linux and Windows evidence to a future OpenSpec change.
 - [x] 10.6 Run extension conformance and all contributed workflow-generation tests against every supported API-bearing OpenSpec version and a fresh official-upstream patch build.
 - [x] 10.7 Pack the companion release candidate, inspect its published file list and dependency metadata, install the actual candidate with the released core seam in a clean project, and exercise all five contributed workflows through installed host discovery.
-- [ ] 10.8 After tasks 15.1 and 15.2 pass, run one bounded independent code, accepted-security-boundary, maintainability, requirement-to-scenario, and final-goal acceptance review. The review may block only for a reproducible violation of a current requirement within the frozen threat model with an observable impact; record speculative hardening, new features, full-GSD administration, and unqualified-host concerns as future work rather than reopening this increment.
+- [x] 10.8 After tasks 15.1 and 15.2 pass, run one bounded independent code, accepted-security-boundary, maintainability, requirement-to-scenario, and final-goal acceptance review. The review may block only for a reproducible violation of a current requirement within the frozen threat model with an observable impact; record speculative hardening, new features, full-GSD administration, and unqualified-host concerns as future work rather than reopening this increment.
 - [ ] 10.9 After task 10.8 passes, privately link or install the verified OpenSpec GSD companion in the user's macOS environment, run extension doctor and installed-interface diagnostics, and smoke all five contributed workflows plus the `gsd.assurance` archive gate. Do not publish to a package registry.
 
 ## 11. Remediate Independent Review Findings
@@ -253,3 +253,11 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - OpenSpec core build, type-check, and lint passed. Ten extension, archive, and survivability test files passed 272 tests; the extension-seam budget reported no violations. Strict validation passed.
 - Upstream survivability passed against official revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the generic seam applied in a disposable upstream worktree and all 8 seam files passed 61 tests.
 - Task 10.8 remains open pending a targeted independent re-review of companion commits `c220ba8` and `3e2adef`. Task 10.9 remains dependency-blocked until that review passes.
+
+## Bounded Acceptance Re-Review PASS — 2026-08-14
+
+- Independent verdict: `PASS`; no reproducible violations of the four current requirements and no blocking findings.
+- The reviewer confirmed deterministic readiness blockers cannot be removed or downgraded by adapters; unsupported `## Assumptions` entries block production execution; deterministic repository unknown/conflict evidence survives analyzer results and Tier 0 does not invoke planning adapters; and shell/interpreter-wrapped publication is rejected before workspace creation or runner dispatch.
+- Independent verification passed the focused suite (4 files, 48 tests) and the full build/test suite (36 files, 151 tests). The review worktree remained clean.
+- Broader detection of additional indirect launcher types was classified as future hardening, not a failure of this increment's requirements.
+- Task 10.8 is complete. Task 10.9 may proceed against companion revision `3e2adef7021a38e5983c053f4cd57106276e50f8`.
