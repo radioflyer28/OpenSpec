@@ -159,9 +159,9 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - [ ] 14.2 Add a structured reviewer finding-result contract that derives stable identity from provider, rule, and logical scope, reconciles reruns without caller-selected canonical IDs, and preserves existing lifecycle transitions.
 - [ ] 14.3 Add failing backdated RED and caller-authored source-state probes, then validate RED-before-repair and GREEN-after-repair using canonical event order and bind GREEN to the orchestrator-derived current material revision.
 - [ ] 14.4 Add a production run/check regression that changes source or cited evidence after debug resolution, then mark the verification stale, reopen the session, and require new GREEN evidence plus a new verifier-stage confirmation.
-- [ ] 14.5 Add run-status projection-tampering tests and make JSON and human output report an explicit blocking integrity error without presenting the run or assurance as complete or passing.
-- [ ] 14.6 Preserve and merge release-applicability and unresolved comparison-base checks through candidate execution so a successful artifact check cannot erase prior `human_needed` evidence.
-- [ ] 14.7 Replace the release compatibility range shortcut with standards-compliant semver evaluation, fail closed on invalid ranges, and cover caret, tilde, comparator, prerelease, incompatible-major, and malformed inputs.
+- [x] 14.5 Add run-status projection-tampering tests and make JSON and human output report an explicit blocking integrity error without presenting the run or assurance as complete or passing.
+- [x] 14.6 Preserve and merge release-applicability and unresolved comparison-base checks through candidate execution so a successful artifact check cannot erase prior `human_needed` evidence.
+- [x] 14.7 Replace the release compatibility range shortcut with standards-compliant semver evaluation, fail closed on invalid ranges, and cover caret, tilde, comparator, prerelease, incompatible-major, and malformed inputs.
 - [ ] 14.8 Run focused defect probes, full companion verification, conformance, installed-artifact checks, core seam tests, strict OpenSpec validation, and upstream survivability; record exact results and leave tasks 10.8 and 13.11 open for a fresh independent re-review.
 
 ## De-complexity Audit Evidence — 2026-08-13
