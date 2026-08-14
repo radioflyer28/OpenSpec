@@ -166,8 +166,8 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 
 ## 15. Rename and Qualify OpenSpec GSD for Private macOS Use
 
-- [ ] 15.1 Rename all current external companion surfaces from the Guardrails working name to product **OpenSpec GSD**, package and CLI `openspec-gsd`, extension ID `gsd`, archive gate `gsd.assurance`, configuration `openspec/gsd.json`, and generated execution-record directory `.openspec-gsd/`; retain `/opsx:*` workflow names. Update implementation, manifests, schemas, fixtures, tests, help, and documentation without introducing compatibility aliases for the private unpublished identity.
-- [ ] 15.2 Add or update tests proving OpenSpec artifacts remain the sole human-maintained planning truth, generated execution records reference rather than reproduce OpenSpec content, no GSD project-management artifacts or complete-runtime dependency are introduced, and no registry publication occurs. Run build, type-check, lint, full companion tests, core-seam and extension conformance tests, strict OpenSpec validation, upstream-survivability checks, and packed clean-install qualification on macOS; exercise all five contributed workflows and `gsd.assurance` from the installed artifact.
+- [x] 15.1 Rename all current external companion surfaces from the Guardrails working name to product **OpenSpec GSD**, package and CLI `openspec-gsd`, extension ID `gsd`, archive gate `gsd.assurance`, configuration `openspec/gsd.json`, and generated execution-record directory `.openspec-gsd/`; retain `/opsx:*` workflow names. Update implementation, manifests, schemas, fixtures, tests, help, and documentation without introducing compatibility aliases for the private unpublished identity.
+- [x] 15.2 Add or update tests proving OpenSpec artifacts remain the sole human-maintained planning truth, generated execution records reference rather than reproduce OpenSpec content, no GSD project-management artifacts or complete-runtime dependency are introduced, and no registry publication occurs. Run build, type-check, lint, full companion tests, core-seam and extension conformance tests, strict OpenSpec validation, upstream-survivability checks, and packed clean-install qualification on macOS; exercise all five contributed workflows and `gsd.assurance` from the installed artifact.
 
 ## Completion-Boundary Revision Evidence — 2026-08-14
 
@@ -175,6 +175,15 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - `.openspec-gsd/` is limited to machine-generated execution evidence needed to execute, resume, and verify work. It is not a GSD planning hierarchy or parallel source of scope.
 - Hosted Linux and Windows qualification was removed from this private-use increment. Task 15.2 is the sole platform qualification obligation and targets macOS.
 - Tasks 10.8, 10.9, 15.1, and 15.2 form the complete remaining finish line. Task 10.8 is one bounded acceptance review, not an open-ended hardening cycle.
+
+## OpenSpec GSD Rename and macOS Qualification Evidence — 2026-08-14
+
+- RED: `test/product-identity.test.ts` initially failed two of three tests because the package still identified as `openspec-guardrails` and the `.openspec-gsd/` path API did not exist.
+- Companion commit `075c3ca` renames the product, package/CLI, exported APIs, manifest ID, gate, configuration, execution-record path, workflows, tests, and current documentation without old-name aliases. A repository and built-output scan found no remaining Guardrails identity in current companion surfaces.
+- Companion lint and type-check passed. The full suite passed 36 files and 144 tests, including source-of-truth, exclusion, cross-repository archive, private pack/clean-install, five installed workflows, and `gsd.assurance` coverage. Extension conformance passed 4 tests.
+- OpenSpec commit `c9e45ee` aligns the maintained fork prerelease to `1.8.0-gsd.1` and updates only fork-identity documentation and generic seam fixtures. Core build, type-check, and lint passed; 9 extension/archive files passed 269 tests; the seam budget reported no violations.
+- Strict validation passed. Upstream survivability passed against official revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the generic seam applied in a disposable worktree and all 8 verification files passed 61 tests.
+- Qualification ran on macOS and made no Linux or Windows support claim. No package-registry publication or complete GSD runtime installation occurred.
 
 ## De-complexity Audit Evidence — 2026-08-13
 
