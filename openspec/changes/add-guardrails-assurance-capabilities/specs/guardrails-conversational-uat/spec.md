@@ -24,7 +24,7 @@ For each applicable human acceptance scenario projected from the current canonic
 - **THEN** Guardrails fails closed with a projection error instead of satisfying the gate with an empty queue
 
 ### Requirement: UAT records evidence and explicit disposition
-Each scenario SHALL be recorded as `passed`, `failed`, `blocked`, or `accepted_limitation` with human-provided notes and evidence references where available. A passing or accepted-limitation disposition SHALL require explicit human confirmation.
+Each scenario SHALL be recorded as `passed`, `failed`, `blocked`, or `accepted_limitation` with human-provided notes and evidence references where available. A passing or accepted-limitation disposition SHALL require explicit human confirmation through the dedicated UAT action or a negotiated human-interaction stage. Actor identity MAY be retained as attribution, but executor, reviewer, verifier, and generic domain-result paths SHALL NOT submit a human disposition.
 
 #### Scenario: User confirms expected behavior
 - **WHEN** the human observes the expected result and explicitly marks the scenario passed
@@ -33,6 +33,14 @@ Each scenario SHALL be recorded as `passed`, `failed`, `blocked`, or `accepted_l
 #### Scenario: Scenario cannot be performed
 - **WHEN** an environmental or access constraint prevents the scenario from being exercised
 - **THEN** Guardrails records it as blocked and keeps the associated gate unresolved
+
+#### Scenario: Automated role submits a human disposition
+- **WHEN** an executor, reviewer, verifier, or generic domain-result path attempts to mark a UAT scenario passed or accepted limitation
+- **THEN** Guardrails rejects the disposition and keeps the scenario unresolved
+
+#### Scenario: Host cannot obtain explicit human interaction
+- **WHEN** a passing or accepted-limitation decision is required but the host cannot provide a dedicated user action or negotiated human-interaction stage
+- **THEN** Guardrails preserves available notes and evidence, reports `human_needed`, and leaves the scenario unresolved
 
 ### Requirement: Failed UAT becomes linked repair work
 When a scenario fails, Guardrails SHALL create or update a finding linked to the scenario, controlling requirement, relevant task, human observation, and submitted evidence. After repair, the original scenario SHALL be presented again for human confirmation.
@@ -66,3 +74,7 @@ Guardrails SHALL keep a required human acceptance gate unresolved while any appl
 #### Scenario: Accepted implementation or requirement changes materially
 - **WHEN** a material controlling OpenSpec artifact or cited implementation revision changes after a UAT disposition
 - **THEN** Guardrails invalidates the affected acceptance and requires human retest before archive
+
+#### Scenario: Accepted evidence changes materially
+- **WHEN** an evidence attachment or recorded evidence digest associated with a passing or accepted-limitation disposition changes
+- **THEN** Guardrails invalidates the affected acceptance and requires renewed explicit human confirmation

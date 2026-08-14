@@ -49,19 +49,39 @@ Guardrails SHALL persist sufficient session state to resume after process exit o
 - **THEN** its logical evidence references remain valid or are reported as unavailable with remediation guidance
 
 ### Requirement: Defect resolution includes regression proof
-A debugging session resolving a behavior defect SHALL require a relevant regression test or deterministic check that fails for the defect and passes after the fix. A non-applicable exemption SHALL include a recorded reason and independent acceptance.
+A debugging session resolving a behavior defect SHALL link to existing canonical evidence from a relevant regression test or deterministic check that fails for the defect and passes after the fix. Each evidence record SHALL identify the stable check, task or defect subject, observed `fail` or `pass` outcome, relevant repository revision, and evidence digest. The fail and pass evidence SHALL concern the same check and subject, and the failing evidence SHALL precede the implementation fix whose resulting revision produces the passing evidence. A non-applicable exemption SHALL include a recorded reason and explicit human acceptance.
 
 #### Scenario: Defect is fixed with regression evidence
 - **WHEN** the root cause is corrected and the associated regression check passes
-- **THEN** Guardrails may resolve the debugging session after independent verification of the evidence
+- **THEN** Guardrails may resolve the debugging session only after a distinct orchestrator-dispatched verifier stage confirms the fail-before-pass evidence
 
 #### Scenario: Executor attempts to close its own debugging session
-- **WHEN** the executor supplies a regression reference without a distinct authorized verifier identity and current evidence digest
+- **WHEN** the executor supplies regression evidence with a different verifier name but without confirmation from a distinct verifier stage dispatched by the orchestrator
 - **THEN** Guardrails keeps the debugging session unresolved and identifies the missing independent verification
+
+#### Scenario: Synthetic regression references are supplied
+- **WHEN** a participant supplies caller-authored RED or GREEN reference strings without corresponding canonical evidence records
+- **THEN** Guardrails rejects the references as regression proof and keeps the debugging session unresolved
+
+#### Scenario: RED and GREEN concern different checks or subjects
+- **WHEN** the failing and passing observations do not identify the same stable check and defect subject
+- **THEN** Guardrails does not treat them as proof that the recorded defect was fixed
+
+#### Scenario: Passing observation does not follow the fix
+- **WHEN** the alleged passing observation predates the failing observation or is not bound to the resulting implementation revision
+- **THEN** Guardrails rejects the regression sequence
+
+#### Scenario: Regression evidence becomes stale
+- **WHEN** a resolved session's source revision, check definition, regression evidence record, or controlling evidence changes
+- **THEN** Guardrails marks the regression conclusion stale and requires renewed evidence and independent verifier-stage confirmation
 
 #### Scenario: Fix lacks regression proof
 - **WHEN** implementation changes appear to remove the symptom but no applicable regression evidence exists
 - **THEN** the debugging session remains unresolved
+
+#### Scenario: Regression exemption lacks explicit human acceptance
+- **WHEN** a participant claims regression testing is not applicable but an explicit human action is unavailable
+- **THEN** Guardrails reports `human_needed` and does not resolve the debugging session
 
 #### Scenario: Archive requested with unresolved debugging
 - **WHEN** a blocking failure has an active, unresolved, or human-needed debugging session
