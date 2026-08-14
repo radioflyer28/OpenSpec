@@ -1,10 +1,10 @@
 ## Context
 
-See proposal.md for motivation. Guardrails already compiles OpenSpec artifacts into a task graph, selects assurance checks, negotiates portable execution tiers, records canonical events, materializes run and assurance projections, bounds repair attempts, and exposes the guardrails.assurance archive gate.
+See proposal.md for motivation. OpenSpec GSD already compiles OpenSpec artifacts into a task graph, selects assurance checks, negotiates portable execution tiers, records canonical events, materializes run and assurance projections, bounds repair attempts, and exposes the `gsd.assurance` archive gate.
 
-The companion package owns assurance policy. OpenSpec core discovers workflows and invokes gates through the generic extension API; this change does not add Guardrails-specific behavior to core. Tier 0 remains the portability baseline, while higher tiers may dispatch isolated or parallel roles.
+The companion package owns assurance policy. OpenSpec core discovers workflows and invokes gates through the generic extension API; this change does not add OpenSpec GSD-specific behavior to core. Tier 0 remains the portability baseline, while higher tiers may dispatch isolated or parallel roles.
 
-Implementation of this increment introduced valuable readiness, finding, debugging, UAT, and install-assurance behavior together with disproportionate state-concurrency, filesystem-adversary, compatibility, and release-isolation machinery. An independent de-complexity audit concluded that Guardrails should remain an assurance coordinator rather than become a local security runtime. The current version 2 generated-state format is unpublished and may be simplified without creating a permanent compatibility ladder.
+Implementation of this increment introduced valuable readiness, finding, debugging, UAT, and install-assurance behavior together with disproportionate execution-record concurrency, filesystem-adversary, compatibility, and release-isolation machinery. An independent de-complexity audit concluded that OpenSpec GSD should remain an assurance coordinator rather than become a local security runtime. The current version 2 execution-record format is unpublished and may be simplified without creating a permanent compatibility ladder.
 
 ## Goals / Non-Goals
 
@@ -12,49 +12,56 @@ Implementation of this increment introduced valuable readiness, finding, debuggi
 
 - Fail early when a change plan cannot establish its stated goal.
 - Give executors evidence-backed repository context without creating another human-maintained plan.
+- Keep OpenSpec proposal, specification, design, and task artifacts as the sole human-maintained planning and development-tracking truth.
+- Adopt selected GSD skills and harness mechanisms without requiring the complete GSD runtime or its project-state model.
 - Preserve structured investigations, findings, and human acceptance across ordinary process or host-context loss.
 - Require relevant fail-before-pass evidence and independent verifier-stage confirmation for behavior-defect resolution.
-- Verify private distributable artifacts through packing, inspection, clean installation, and public-surface checks.
+- Verify private distributable artifacts on macOS through packing, inspection, clean installation, and declared installed-interface checks.
 - Make canonical gate and status results reproducible from one orchestrator-owned event history.
 - Reduce implementation and maintenance complexity while preserving equivalent assurance outcomes across supported tiers.
 
 **Non-Goals:**
 
 - Protecting against a malicious repository owner or same-user process with arbitrary workspace or shell access.
-- Detecting coordinated forgery of every locally writable Guardrails file.
+- Detecting coordinated forgery of every locally writable OpenSpec GSD execution-evidence file.
 - Protecting against a compromised host, runtime, filesystem, or operating system.
 - Providing cryptographic human or agent identity.
 - Building a general-purpose filesystem, network, or process sandbox.
-- Maintaining permanent compatibility for unpublished intermediate generated-state schemas.
-- Adding phases, milestones, roadmaps, workstreams, project state, or other GSD administration.
+- Maintaining permanent compatibility for unpublished intermediate execution-record schemas.
+- Adding GSD `PROJECT.md`, `ROADMAP.md`, `PLAN.md`, `STATE.md`, `.planning/`, phases, milestones, roadmaps, workstreams, project state, or other GSD administration.
+- Installing or operating the complete GSD runtime.
 - Implementing deferred Little Coder mechanisms or the deferred specialist-checker backlog.
 - Publishing packages, creating releases, mutating registries, or performing destructive actions against external user data.
 
 ## Decisions
 
-### 1. Keep assurance policy in the companion extension
+### 1. Keep assurance policy in the companion extension and planning truth in OpenSpec
 
-The workflows, schemas, adapters, reports, and gate policy remain in openspec-guardrails. The manifest contributes debug and UAT workflows through the existing public extension contract. Plan readiness and release assurance remain stages of run and check.
+The workflows, schemas, adapters, reports, and gate policy remain in openspec-gsd. The manifest contributes debug and UAT workflows through the existing public extension contract. Plan readiness and release assurance remain stages of run and check.
 
-The compatible OpenSpec API range changes only when conformance testing identifies a generic extension-seam gap. Guardrails policy does not enter OpenSpec core.
+The compatible OpenSpec API range changes only when conformance testing identifies a generic extension-seam gap. OpenSpec GSD policy does not enter OpenSpec core.
+
+OpenSpec GSD selects and adapts individual GSD skills and harness mechanisms; it does not depend on the complete GSD runtime. OpenSpec artifacts remain authoritative for scope, requirements, design, and tasks. Machine-generated context, findings, debugging sessions, UAT dispositions, and verification evidence live beneath `.openspec-gsd/`, reference OpenSpec requirement and task identities, and contain only the operational detail needed to execute, resume, or verify work. They do not reproduce OpenSpec planning prose or form a parallel plan.
+
+The companion never creates or requires GSD milestones, phases, roadmaps, workstreams, `.planning/`, `PROJECT.md`, `ROADMAP.md`, `PLAN.md`, or `STATE.md`. When execution evidence indicates that scope or planning must change, the workflow stops for an explicit OpenSpec artifact update.
 
 **Alternative considered:** add first-class readiness, debugging, or UAT policy to OpenSpec core. Rejected because it expands upstream conflict surface and weakens the companion boundary.
 
 ### 2. Adopt an explicit cooperative assurance boundary
 
-Guardrails protects against incomplete implementation, ordinary executor self-certification, stale or internally inconsistent evidence, accidental generated-state corruption, accidental path escape, unsafe default side effects, and unsupported capabilities being represented as successful assurance.
+OpenSpec GSD protects against incomplete implementation, ordinary executor self-certification, stale or internally inconsistent evidence, accidental execution-record corruption, accidental path escape, unsafe default side effects, and unsupported capabilities being represented as successful assurance.
 
-Generated state is durable and reconstructable workflow evidence, not a tamper-proof audit ledger. Guardrails validates schemas and content digests, replays canonical events, compares projections, invalidates stale evidence, and fails closed on malformed records. It accepts the risk that a malicious workspace owner or same-user process can coordinate changes to source, tests, specifications, configuration, commands, and generated evidence.
+Generated execution records are durable and reconstructable workflow evidence, not planning state or a tamper-proof audit ledger. OpenSpec GSD validates schemas and content digests, replays canonical events, compares projections, invalidates stale evidence, and fails closed on malformed records. It accepts the risk that a malicious workspace owner or same-user process can coordinate changes to source, tests, specifications, configuration, commands, and generated evidence.
 
-Strong identity or isolation is accepted only when supplied by a negotiated host capability. When a requirement genuinely depends on an unavailable capability, Guardrails returns human_needed rather than emulating it.
+Strong identity or isolation is accepted only when supplied by a negotiated host capability. When a requirement genuinely depends on an unavailable capability, OpenSpec GSD returns human_needed rather than emulating it.
 
 **Alternative considered:** harden local state against hostile same-user mutation. Rejected because meaningful protection would require host or operating-system trust infrastructure outside the extension and would not secure the rest of the writable repository.
 
 ### 3. Use one orchestrator-owned canonical writer
 
-Agents, checkers, reviewers, verifiers, and worktree executors return structured domain results. They do not write events.json, run.json, assurance.json, or other canonical generated state.
+Agents, checkers, reviewers, verifiers, and worktree executors return structured domain results. They do not write events.json, run.json, assurance.json, or other canonical execution records.
 
-The Guardrails orchestrator validates returned results, assigns workflow provenance, accepts them in deterministic orchestration order, appends them to canonical history, and updates projections. Caller timestamps are evidence metadata and never reorder accepted events. Stable event identities retain idempotency for retried result delivery.
+The OpenSpec GSD orchestrator validates returned results, assigns workflow provenance, accepts them in deterministic orchestration order, appends them to canonical history, and updates projections. Caller timestamps are evidence metadata and never reorder accepted events. Stable event identities retain idempotency for retried result delivery.
 
 Tier behavior is:
 
@@ -64,7 +71,7 @@ Tier behavior is:
 
 Accidental simultaneous mutating commands may be rejected by host serialization or a coarse command-level busy marker. Such a marker has no lease, heartbeat, PID-liveness inference, automatic stale stealing, quarantine, or fencing. Recovery from a stale marker is explicit.
 
-**Alternative considered:** allow each role or process to append canonical events directly. Rejected because optional parallel execution does not justify treating local generated state as a multi-writer database.
+**Alternative considered:** allow each role or process to append canonical events directly. Rejected because optional parallel execution does not justify treating local execution evidence as a multi-writer database.
 
 ### 4. Keep one canonical history and two replaceable projections
 
@@ -72,13 +79,13 @@ The current unpublished schema remains version 2; this change does not introduce
 
 One read-only canonical loader performs path validation, schema validation, event replay, projection regeneration, and projection comparison. Gate evaluation, check, run-status, and projection repair use this shared path. A missing, malformed, stale, digest-inconsistent, or irreproducible projection cannot establish a passing gate or status.
 
-Array append order is canonical. Replay does not sort completed events by caller timestamps. Atomic file replacement prevents interrupted writes from replacing the prior valid store with a partial file. Coordinated rewriting of canonical state and its projections remains outside the accepted threat model.
+Array append order is canonical. Replay does not sort completed events by caller timestamps. Atomic file replacement prevents interrupted writes from replacing the prior valid store with a partial file. Coordinated rewriting of canonical execution history and its projections remains outside the accepted threat model.
 
 **Alternative considered:** add hash chains, an external expected-tail anchor, transaction markers, or branch recovery. Rejected because those mechanisms create a local audit-ledger protocol without protecting against an actor able to rewrite every workspace file.
 
 ### 5. Simplify generated-path containment
 
-Every Guardrails-owned generated path is listed in one explicit constant registry. Filesystem boundaries use Node path APIs and portable record identities. Guardrails resolves the active change root, verifies ordinary containment, rejects an existing generated-state symbolic link, Windows junction, reparse point, or non-directory that escapes the change, writes to a unique temporary file, and replaces the target atomically.
+Every OpenSpec GSD-owned generated path is listed in one explicit constant registry. Filesystem boundaries use Node path APIs and portable record identities. OpenSpec GSD resolves the active change root, verifies ordinary containment, rejects an existing `.openspec-gsd/` symbolic link, redirect, or non-directory that escapes the change, writes to a unique temporary file, and replaces the target atomically.
 
 These controls prevent accidental escape and unsafe pre-existing path layouts. They do not claim protection against hostile path replacement after validation. Subprocess ancestor-identity checks, native descriptor-relative APIs, handle-identity layers, and lock-lifecycle race defenses are removed.
 
@@ -86,9 +93,9 @@ These controls prevent accidental escape and unsafe pre-existing path layouts. T
 
 ### 6. Collapse unpublished schema compatibility
 
-The version 2 schema may change in place while the package remains private and unpublished. Before removing runtime version 1 support, implementation inventories actual active version 1 state. If needed, a one-time conversion command preserves relevant evidence; otherwise users receive explicit regeneration and human-reconfirmation guidance.
+The version 2 execution-record schema may change in place while the package remains private and unpublished. Before removing runtime version 1 support, implementation inventories actual active version 1 execution records. If needed, a one-time conversion command preserves relevant evidence; otherwise users receive explicit regeneration and human-reconfirmation guidance.
 
-Permanent dual readers, version 1 compatibility exports, downgrade bundles, and restoration over newer canonical state are removed. Git history and retained local package revisions provide implementation rollback; generated-state downgrade is not a public contract.
+Permanent dual readers, version 1 compatibility exports, downgrade bundles, and restoration over newer canonical execution history are removed. Git history and retained local package revisions provide implementation rollback; execution-record downgrade is not a public contract.
 
 **Alternative considered:** retain every intermediate schema indefinitely. Rejected because it converts development artifacts into an unsupported public compatibility obligation.
 
@@ -144,37 +151,46 @@ Applicable checks may:
 
 Operational hygiene includes a minimal environment, bounded and redacted output, argument-vector execution, disabled lifecycle scripts unless explicitly authorized, and no publication or external destructive action. These measures do not constitute a sandbox. Strong filesystem, network, process, or identity isolation is delegated to the host. A requirement that depends on unavailable isolation becomes human_needed.
 
-Generic previous-artifact state contracts, synthetic upgrade sentinels, generalized upgrade and rollback drivers, and claims that Guardrails contains arbitrary candidate code are removed. A concrete future OpenSpec requirement may add product-specific migration verification separately.
+Generic previous-artifact compatibility contracts, synthetic upgrade sentinels, generalized upgrade and rollback drivers, and claims that OpenSpec GSD contains arbitrary candidate code are removed. A concrete future OpenSpec requirement may add product-specific migration verification separately.
 
-Quick mode performs applicable pack, inspection, clean-install, and public-surface smoke checks. Guarded mode adds applicable metadata and compatibility policy. Full mode expands explicitly configured platform and compatibility matrices. Omitted required evidence remains unresolved.
+Quick mode performs applicable pack, inspection, clean-install, and declared installed-interface smoke checks on macOS. Guarded mode adds applicable metadata and compatibility policy. Full mode may expand explicitly configured compatibility or future platform requirements, but this increment configures and qualifies macOS only. An explicitly configured requirement still remains unresolved when its evidence is unavailable; Linux and Windows qualification are not default archive obligations for this private-use increment.
 
 ### 12. Expose one assurance truth through workflows and gates
 
 run-status and its JSON form use the same canonical loader as the archive gate. Status includes readiness, repository-context freshness, finding states, active debug sessions, pending UAT, release applicability, and next actions. Canonical or projection-integrity errors are explicit blocking status results.
 
-The existing guardrails.assurance gate remains the single archive obligation and summarizes subordinate readiness, finding, debugging, UAT, release, review, and goal-verification outcomes. Disabling or rerouting a workflow does not erase an already recorded required obligation.
+The `gsd.assurance` gate remains the single archive obligation and summarizes subordinate readiness, finding, debugging, UAT, release, review, and goal-verification outcomes. Disabling or rerouting a workflow does not erase an already recorded required obligation.
+
+### 13. Freeze the private macOS completion boundary
+
+This increment is complete when its current OpenSpec requirements and regression suites pass, the packed companion installs in a clean macOS project, its declared installed interfaces and five contributed workflows are discovered and exercised, and one bounded acceptance review reports no reproducible blocking defect within the accepted assurance boundary.
+
+The acceptance review may block only for a concrete violation of a current requirement within the frozen threat model, supported by a reproducible execution path and observable impact. Speculative hardening, new security boundaries, additional features, and Linux or Windows qualification are future work unless deliberately introduced by a later OpenSpec change. Passing macOS evidence does not imply support for unqualified hosts.
+
+An explicit project configuration may still request additional platform evidence and remain unresolved when it is unavailable. This does not make Linux or Windows qualification a completion requirement for the companion's own private macOS installation.
 
 ## Risks / Trade-offs
 
 - **Single-writer serialization may reduce peak throughput** -> Canonical commits are small; roles may still execute concurrently and return results asynchronously.
 - **A crashed command may leave a coarse busy marker** -> Recovery is explicit and diagnostic rather than inferred from unreliable elapsed time or PID reuse.
-- **Removing runtime schema compatibility may invalidate local development state** -> Inventory actual state first, convert once when needed, otherwise require explicit regeneration and human reconfirmation.
-- **Accepting hostile local-state mutation may permit deliberate forgery** -> State the boundary honestly and rely on repository ownership and host security; rerun independent checks when provenance is uncertain.
+- **Removing runtime schema compatibility may invalidate local execution evidence** -> Inventory actual records first, convert once when needed, otherwise require explicit regeneration and human reconfirmation.
+- **Accepting hostile local execution-record mutation may permit deliberate forgery** -> State the boundary honestly and rely on repository ownership and host security; rerun independent checks when provenance is uncertain.
 - **Operational release hygiene does not contain arbitrary code** -> Delegate required isolation to the host and return human_needed when unavailable.
 - **Deleting reports or compatibility APIs may affect unknown consumers** -> Search repository and installed private usage before deletion; retain only consumers with concrete evidence.
 - **Simplification could weaken useful assurance behavior** -> Preserve outcome-focused tests for canonical gate replay, atomic replacement, existing symlink rejection, readiness staleness, serialized higher-tier result merging, debug independence, UAT retest, installed artifacts, and the OpenSpec core boundary.
-- **Cross-platform behavior may diverge** -> Use Node path APIs, explicit generated-path constants, disposable platform-native directories, and hosted Linux, macOS, and Windows verification.
+- **Behavior on unqualified hosts may diverge** -> Preserve portable identities and Node path APIs, make no Linux or Windows support claim in this increment, and qualify additional hosts through future changes before advertising support.
 
 ## Migration Plan
 
 1. Record the accepted assurance boundary and reject the proposed version 3, trusted-authority, native-filesystem, and sandbox directions.
-2. Inventory active generated state and private consumers of compatibility APIs and per-domain reports.
+2. Inventory active generated execution records and private consumers of compatibility APIs and per-domain reports.
 3. Route structured role results through one orchestrator writer, then remove event-level leases, heartbeat, liveness, quarantine, fencing, and direct role writes.
-4. Collapse the unpublished schema and generated files, retaining a one-time importer only when actual version 1 state requires it.
+4. Collapse the unpublished schema and generated files, retaining a one-time importer only when actual version 1 execution records require it.
 5. Share canonical loading across gate, check, status, and projection regeneration.
 6. Fix orchestrator-owned provenance, semantically bound regression evidence, and configured release-surface precedence.
 7. Trim release assurance to private artifact and install outcomes and delegate stronger isolation to host capabilities.
 8. Remove incidental security-runtime tests and preserve the outcome-focused regression suite.
 9. Update documentation, capability maps, package exports, and CLI guidance.
-10. Run companion, core-seam, conformance, installed-artifact, upstream-survivability, and available cross-platform tests.
-11. Request a fresh independent code, security-boundary, and goal review against this explicit threat model.
+10. Run companion, core-seam, conformance, installed-artifact, upstream-survivability, and macOS qualification tests.
+11. Request one bounded acceptance review against the explicit threat model and completion boundary.
+12. Link or install the verified private companion on the user's macOS environment, run extension diagnostics, and exercise its declared installed interfaces before archiving the change.

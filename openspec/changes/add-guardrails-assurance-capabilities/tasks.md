@@ -80,7 +80,7 @@
 - [x] 8.7 Implement repository-policy checks for versioning, compatibility ranges, release notes or changesets, and documented installation commands.
 - [x] 8.8 Implement isolated previous-version upgrade scenarios and rollback evidence, requiring human disposition for unavailable, destructive, or irreversible rollback.
 - [x] 8.9 Route quick mode to required pack/install/public-smoke evidence, guarded mode to applicable metadata/upgrade/rollback checks, and full mode to configured platform and compatibility matrices without claiming omitted required checks passed.
-- [ ] 8.10 Verify private artifact and install checks on Linux, macOS, and Windows, including paths with spaces, missing tools, disabled lifecycle scripts, cleanup after partial failure, bounded and redacted output, and proof that no external publication occurred.
+- [x] 8.10 Supersede the hosted Linux/macOS/Windows matrix with the private macOS qualification in task 15.2. Linux and Windows qualification are future work and are not archive blockers or support claims for this increment.
 
 ## 9. Integrate Workflows, Configuration, Status, and Gates
 
@@ -98,11 +98,11 @@
 - [x] 10.2 Run end-to-end Tier 0 scenarios from incomplete plan through readiness remediation, execution, failed review, repair exhaustion, debugging, regression proof, independent verification, UAT, release assurance, and archive.
 - [x] 10.3 Run Tier 1 and Tier 2 adapter tests proving isolated or parallel execution changes scheduling but not schemas, lifecycle authorization, evidence requirements, or gate outcomes.
 - [x] 10.4 Run the version 1 fixture migration and downgrade-safety matrix, including interruption, replay repair, corrupt records, stale evidence, and restoration of the previous companion version.
-- [ ] 10.5 Run hosted Linux, macOS, and Windows matrices for portable references, atomic state, debug resume, UAT evidence, temporary release projects, clean installs, and CLI entry points.
+- [x] 10.5 Replace the hosted multi-platform completion requirement with the macOS qualification in task 15.2 while retaining portable identities as a design constraint. Defer hosted Linux and Windows evidence to a future OpenSpec change.
 - [x] 10.6 Run extension conformance and all contributed workflow-generation tests against every supported API-bearing OpenSpec version and a fresh official-upstream patch build.
 - [x] 10.7 Pack the companion release candidate, inspect its published file list and dependency metadata, install the actual candidate with the released core seam in a clean project, and exercise all five contributed workflows through installed host discovery.
-- [ ] 10.8 After completing the independent-review remediation and de-complexity tasks in sections 11 through 13, rerun independent code, security-boundary, maintainability, requirement-to-scenario coverage, and final goal review with every original and newly discovered blocking finding dispositioned.
-- [ ] 10.9 Prepare the companion as a new minor version for private link or packed-artifact installation only after active generated state is inventoried, de-complexification is complete, all required matrices pass, regeneration or one-time conversion guidance is complete, and the installed artifact passes conformance; defer package-registry publication.
+- [ ] 10.8 After tasks 15.1 and 15.2 pass, run one bounded independent code, accepted-security-boundary, maintainability, requirement-to-scenario, and final-goal acceptance review. The review may block only for a reproducible violation of a current requirement within the frozen threat model with an observable impact; record speculative hardening, new features, full-GSD administration, and unqualified-host concerns as future work rather than reopening this increment.
+- [ ] 10.9 After task 10.8 passes, privately link or install the verified OpenSpec GSD companion in the user's macOS environment, run extension doctor and installed-interface diagnostics, and smoke all five contributed workflows plus the `gsd.assurance` archive gate. Do not publish to a package registry.
 
 ## 11. Remediate Independent Review Findings
 
@@ -151,7 +151,7 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - [x] 13.8 Remove generic upgrade and rollback state contracts, previous-artifact machinery, Guardrails-provided filesystem and network isolation claims, and adversarial sandbox tests; retain temporary workspaces, minimal environment, redaction, argument-vector execution, disabled lifecycle scripts, no-publication behavior, and host-capability escalation.
 - [x] 13.9 Narrow public exports and configuration, remove incidental tests, update CLI help, README, compatibility guidance, maintenance documentation, capability maps, and generated-file registries, and preserve outcome-focused Tier 0, Tier 1, Tier 2, gate, readiness, finding, debug, UAT, install, and core-boundary tests.
 - [x] 13.10 Run build, type-check, lint, full companion tests, conformance, core-seam tests, installed private-artifact verification, upstream-survivability checks, and available Linux, macOS, and Windows tests; record exact evidence and leave unavailable hosted evidence unresolved.
-- [ ] 13.11 Request a fresh independent code, security-boundary, maintainability, and goal review against the accepted threat model; disposition every blocking finding before private version preparation.
+- [x] 13.11 Consolidate the duplicate final-review obligation into the single bounded acceptance review in task 10.8; no separate unconstrained review cycle is required.
 
 ## 14. Remediate Independent Final Review Findings
 
@@ -162,7 +162,19 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - [x] 14.5 Add run-status projection-tampering tests and make JSON and human output report an explicit blocking integrity error without presenting the run or assurance as complete or passing.
 - [x] 14.6 Preserve and merge release-applicability and unresolved comparison-base checks through candidate execution so a successful artifact check cannot erase prior `human_needed` evidence.
 - [x] 14.7 Replace the release compatibility range shortcut with standards-compliant semver evaluation, fail closed on invalid ranges, and cover caret, tilde, comparator, prerelease, incompatible-major, and malformed inputs.
-- [x] 14.8 Run focused defect probes, full companion verification, conformance, installed-artifact checks, core seam tests, strict OpenSpec validation, and upstream survivability; record exact results and leave tasks 10.8 and 13.11 open for a fresh independent re-review.
+- [x] 14.8 Run focused defect probes, full companion verification, conformance, installed-artifact checks, core seam tests, strict OpenSpec validation, and upstream survivability; record exact results and leave final independent acceptance review to task 10.8.
+
+## 15. Rename and Qualify OpenSpec GSD for Private macOS Use
+
+- [ ] 15.1 Rename all current external companion surfaces from the Guardrails working name to product **OpenSpec GSD**, package and CLI `openspec-gsd`, extension ID `gsd`, archive gate `gsd.assurance`, configuration `openspec/gsd.json`, and generated execution-record directory `.openspec-gsd/`; retain `/opsx:*` workflow names. Update implementation, manifests, schemas, fixtures, tests, help, and documentation without introducing compatibility aliases for the private unpublished identity.
+- [ ] 15.2 Add or update tests proving OpenSpec artifacts remain the sole human-maintained planning truth, generated execution records reference rather than reproduce OpenSpec content, no GSD project-management artifacts or complete-runtime dependency are introduced, and no registry publication occurs. Run build, type-check, lint, full companion tests, core-seam and extension conformance tests, strict OpenSpec validation, upstream-survivability checks, and packed clean-install qualification on macOS; exercise all five contributed workflows and `gsd.assurance` from the installed artifact.
+
+## Completion-Boundary Revision Evidence — 2026-08-14
+
+- Product identity is OpenSpec GSD. GSD supplies selected skill and harness ideas only; OpenSpec proposal, specifications, design, and tasks remain the sole human-maintained planning and development-tracking truth.
+- `.openspec-gsd/` is limited to machine-generated execution evidence needed to execute, resume, and verify work. It is not a GSD planning hierarchy or parallel source of scope.
+- Hosted Linux and Windows qualification was removed from this private-use increment. Task 15.2 is the sole platform qualification obligation and targets macOS.
+- Tasks 10.8, 10.9, 15.1, and 15.2 form the complete remaining finish line. Task 10.8 is one bounded acceptance review, not an open-ended hardening cycle.
 
 ## De-complexity Audit Evidence — 2026-08-13
 
@@ -177,7 +189,7 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - Review targets: OpenSpec `381422646c3f0d7dca4b7a2e29a2e4dccf15d5f3` and companion `eaa94988f4315c568fd518e917396368e2bd5718`.
 - Independent verdict: `BLOCK`; the architectural de-complexification was accepted, while seven assurance defects remained in provenance, canonical regression chronology, debug staleness, status integrity, release-impact preservation, stable reviewer finding identity, and semver compatibility evaluation.
 - The review independently passed the companion suites, core seam tests, strict change validation, and upstream-survivability check, and reproduced five defect scenarios with disposable probes.
-- Hosted Linux and Windows matrices remain separately tracked by tasks 8.10 and 10.5. Tasks 10.8 and 13.11 remain incomplete until the section 14 remediations receive a fresh independent re-review.
+- At review time, hosted Linux and Windows matrices were tracked by tasks 8.10 and 10.5 and tasks 10.8 and 13.11 were incomplete. The later completion-boundary revision supersedes the hosted matrices and consolidates the review obligation into task 10.8.
 
 ## Independent Final Review Remediation Evidence — 2026-08-14
 
@@ -187,7 +199,7 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - OpenSpec build, type-check, and lint passed. The core seam and survivability unit suite passed 9 files and 64 tests; the extension seam budget reported no violations.
 - `openspec validate add-guardrails-assurance-capabilities --strict` passed.
 - Upstream survivability passed against official revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the allowlisted generic seam applied in a disposable upstream worktree and all 8 seam files passed (61 tests).
-- Tasks 10.8 and 13.11 intentionally remain open. One fresh independent code, security-boundary, maintainability, requirement-to-scenario, and final-goal re-review must disposition the remediated findings before private version preparation.
+- The remediation left tasks 10.8 and 13.11 open at that time. The later completion-boundary revision consolidates them into the single bounded acceptance review in task 10.8.
 
 ## De-complexity Implementation Evidence — 2026-08-13
 
@@ -207,7 +219,7 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - Core seam suite: 9 test files passed; 64 tests passed. `pnpm run check:extension-seam` passed with no budget violations.
 - `openspec validate add-guardrails-assurance-capabilities --strict` passed.
 - `pnpm run check:upstream-survivability` passed against official upstream revision `2826b8889e5223a9a8095d4428b60b56597e1020`; all 8 upstream-worktree seam files passed (61 tests).
-- Hosted Linux and Windows verification is unavailable in this session and remains unresolved. Current-host macOS evidence is recorded above; no cross-platform result is inferred from it.
+- Hosted Linux and Windows verification was unavailable in this session. The later completion-boundary revision removes it from this private-use increment; no cross-platform result or support claim is inferred from the macOS evidence.
 
 ## Local Verification Evidence — 2026-08-13
 
@@ -220,4 +232,4 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - `pnpm run check:extension-seam`: passed with no budget violations.
 - `openspec validate add-guardrails-assurance-capabilities --strict`: passed.
 - `pnpm run check:upstream-survivability`: passed against official upstream revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the maintained patch applied with the three-way strategy and all 8 upstream-worktree seam files passed (61 tests).
-- Intentionally unresolved: hosted Linux/macOS/Windows evidence (8.10 and 10.5), historical fail-first provenance recorded as `human_needed`, de-complexification and its independent review (section 13 and 10.8), and private minor-version preparation gated on those prerequisites (10.9).
+- At the time of this evidence, hosted platform matrices, historical fail-first provenance, de-complexification review, and private version preparation remained unresolved. The later completion-boundary revision supersedes the hosted matrices, retains the historical provenance honestly, and defines tasks 10.8, 10.9, 15.1, and 15.2 as the complete remaining work.
