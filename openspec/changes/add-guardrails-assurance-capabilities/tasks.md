@@ -181,9 +181,9 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 
 ## Independent Final Review Remediation Evidence — 2026-08-14
 
-- Companion `5c143f57cb5e58d12c5fa72652defcd43e43a9bb` derives reviewer finding IDs from structured provider/rule/category/scope reports and accepts reviewer/verifier mutations only through process-local opaque receipts created by read-only orchestrator dispatches. Generic CLI/API role selection and direct technical finding/debug closure are rejected.
+- Companion `72f9fa9bb8a3ca609a8d51b7414845aa7e36e962` derives reviewer finding IDs from structured provider/rule/category/scope reports and accepts reviewer/verifier mutations only through process-local opaque receipts created by read-only orchestrator dispatches. Generic CLI/API role selection and direct technical finding/debug closure are rejected.
 - Focused provenance and debug probes passed, including forged receipt and caller-selected role rejection, stable finding identity across reruns, canonical RED-before-repair/GREEN-after-repair ordering despite conflicting caller timestamps, orchestrator-derived repository revisions, and automatic reopening after post-verification source changes.
-- Companion `pnpm lint`, `pnpm typecheck`, and `pnpm test` passed: 35 test files and 140 tests, including the private packed-candidate clean-install and five-workflow discovery suites. `pnpm conformance` passed 4 tests.
+- Companion `pnpm lint`, `pnpm typecheck`, and `pnpm test` passed: 35 test files and 141 tests, including the private packed-candidate clean-install and five-workflow discovery suites. `pnpm conformance` passed 4 tests.
 - OpenSpec build, type-check, and lint passed. The core seam and survivability unit suite passed 9 files and 64 tests; the extension seam budget reported no violations.
 - `openspec validate add-guardrails-assurance-capabilities --strict` passed.
 - Upstream survivability passed against official revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the allowlisted generic seam applied in a disposable upstream worktree and all 8 seam files passed (61 tests).
