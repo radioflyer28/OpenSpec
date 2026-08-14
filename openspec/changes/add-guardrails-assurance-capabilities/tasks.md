@@ -162,7 +162,7 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - [x] 14.5 Add run-status projection-tampering tests and make JSON and human output report an explicit blocking integrity error without presenting the run or assurance as complete or passing.
 - [x] 14.6 Preserve and merge release-applicability and unresolved comparison-base checks through candidate execution so a successful artifact check cannot erase prior `human_needed` evidence.
 - [x] 14.7 Replace the release compatibility range shortcut with standards-compliant semver evaluation, fail closed on invalid ranges, and cover caret, tilde, comparator, prerelease, incompatible-major, and malformed inputs.
-- [ ] 14.8 Run focused defect probes, full companion verification, conformance, installed-artifact checks, core seam tests, strict OpenSpec validation, and upstream survivability; record exact results and leave tasks 10.8 and 13.11 open for a fresh independent re-review.
+- [x] 14.8 Run focused defect probes, full companion verification, conformance, installed-artifact checks, core seam tests, strict OpenSpec validation, and upstream survivability; record exact results and leave tasks 10.8 and 13.11 open for a fresh independent re-review.
 
 ## De-complexity Audit Evidence — 2026-08-13
 
@@ -178,6 +178,16 @@ Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 
 - Independent verdict: `BLOCK`; the architectural de-complexification was accepted, while seven assurance defects remained in provenance, canonical regression chronology, debug staleness, status integrity, release-impact preservation, stable reviewer finding identity, and semver compatibility evaluation.
 - The review independently passed the companion suites, core seam tests, strict change validation, and upstream-survivability check, and reproduced five defect scenarios with disposable probes.
 - Hosted Linux and Windows matrices remain separately tracked by tasks 8.10 and 10.5. Tasks 10.8 and 13.11 remain incomplete until the section 14 remediations receive a fresh independent re-review.
+
+## Independent Final Review Remediation Evidence — 2026-08-14
+
+- Companion `5c143f57cb5e58d12c5fa72652defcd43e43a9bb` derives reviewer finding IDs from structured provider/rule/category/scope reports and accepts reviewer/verifier mutations only through process-local opaque receipts created by read-only orchestrator dispatches. Generic CLI/API role selection and direct technical finding/debug closure are rejected.
+- Focused provenance and debug probes passed, including forged receipt and caller-selected role rejection, stable finding identity across reruns, canonical RED-before-repair/GREEN-after-repair ordering despite conflicting caller timestamps, orchestrator-derived repository revisions, and automatic reopening after post-verification source changes.
+- Companion `pnpm lint`, `pnpm typecheck`, and `pnpm test` passed: 35 test files and 140 tests, including the private packed-candidate clean-install and five-workflow discovery suites. `pnpm conformance` passed 4 tests.
+- OpenSpec build, type-check, and lint passed. The core seam and survivability unit suite passed 9 files and 64 tests; the extension seam budget reported no violations.
+- `openspec validate add-guardrails-assurance-capabilities --strict` passed.
+- Upstream survivability passed against official revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the allowlisted generic seam applied in a disposable upstream worktree and all 8 seam files passed (61 tests).
+- Tasks 10.8 and 13.11 intentionally remain open. One fresh independent code, security-boundary, maintainability, requirement-to-scenario, and final-goal re-review must disposition the remediated findings before private version preparation.
 
 ## De-complexity Implementation Evidence — 2026-08-13
 
