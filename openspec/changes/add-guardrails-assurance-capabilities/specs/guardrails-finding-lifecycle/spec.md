@@ -26,6 +26,21 @@ A finding SHALL begin as `open` and MAY transition to `repaired`, `independently
 - **WHEN** a read-only verifier evaluates the original concern against current observable evidence and confirms resolution
 - **THEN** Guardrails transitions the finding to independently verified
 
+### Requirement: Finding transition provenance comes from the orchestrated workflow
+Guardrails SHALL assign executor, reviewer, verifier, and human provenance from the workflow stage or explicit user action that produced a result. Domain results and caller-provided actor names or role labels SHALL NOT select their own privileged provenance. An `independently_verified` transition SHALL come from a verifier stage distinct from execution. An `accepted_risk` or other human disposition SHALL come from a dedicated user action or negotiated human-interaction result. When required human interaction is unavailable, Guardrails SHALL leave the finding blocking and report `human_needed`.
+
+#### Scenario: Caller claims to be an independent verifier
+- **WHEN** a CLI caller or domain result supplies an independent-verifier role or identity outside a verifier stage dispatched by the orchestrator
+- **THEN** Guardrails may retain useful attribution but does not transition the finding to independently verified
+
+#### Scenario: Human interaction is unavailable
+- **WHEN** a finding requires accepted risk or another human disposition but the host cannot obtain an explicit user action
+- **THEN** Guardrails reports `human_needed` and leaves the finding unresolved
+
+#### Scenario: Executor result reaches a verifier transition
+- **WHEN** an executor result is submitted to an independently verified transition without a distinct orchestrator-dispatched verifier stage
+- **THEN** Guardrails rejects the transition regardless of the actor name carried by the result
+
 ### Requirement: Accepted risk and human-needed findings require explicit human disposition
 An `accepted_risk` transition SHALL record the accepting human, reason, scope, timestamp, and any expiry or follow-up condition available. A `human_needed` finding SHALL remain blocking until the required human decision is recorded.
 
@@ -59,25 +74,33 @@ The Guardrails assurance gate SHALL fail closed while any blocking finding is op
 - **WHEN** replaceable run or assurance projections report success but canonical Guardrails history remains incomplete, stale, corrupt, or cannot reproduce those projections
 - **THEN** archive is blocked and reports a canonical-state error
 
-#### Scenario: Legacy canonical history disagrees with projections
-- **WHEN** a supported version 1 canonical history and its replaceable run or assurance projections disagree
-- **THEN** archive is blocked until Guardrails can reconcile or safely migrate the canonical history, regardless of which projection reports success
+#### Scenario: Intermediate canonical state is no longer supported
+- **WHEN** Guardrails encounters an unpublished intermediate state format that the current companion cannot replay
+- **THEN** archive and status report an explicit conversion-or-regeneration action instead of trusting its projections
+
+#### Scenario: Status projections agree with one another but canonical replay fails
+- **WHEN** `run.json` and `assurance.json` mutually report success but canonical history is missing, corrupt, or cannot reproduce their state
+- **THEN** `/opsx:run-status` reports the canonical or projection-integrity error and does not report a passing run
 
 ### Requirement: Canonical assurance history is durable and workspace-contained
-Guardrails SHALL preserve every successfully appended assurance event under concurrent writers and SHALL read, write, migrate, restore, or remove generated state only within the resolved active change workspace. Version compatibility operations SHALL preserve canonical version 2 history without destructive replacement.
+Guardrails SHALL use one orchestrator as the canonical generated-state writer. Agents, checkers, reviewers, and verifiers SHALL return structured domain results rather than writing canonical events or projections. The orchestrator SHALL validate and append results in deterministic input order, persist canonical state through atomic replacement, and access only explicitly registered generated paths contained by the resolved active change workspace.
 
-#### Scenario: Concurrent roles append distinct results
-- **WHEN** multiple supported execution roles append unique events concurrently
-- **THEN** every successful append is present exactly once in the replayable canonical history
+#### Scenario: Parallel roles complete in different orders
+- **WHEN** supported roles execute concurrently and return structured results
+- **THEN** the orchestrator serializes their validated results into one deterministic canonical order without granting the roles direct generated-state write access
 
-#### Scenario: A live writer exceeds the normal lock interval
-- **WHEN** a live event writer holds serialization longer than the normal lock interval while another writer attempts to append
-- **THEN** Guardrails preserves ownership safely or rejects a writer without allowing both writers to report success for history that omits either event
+#### Scenario: Caller timestamps differ from completion order
+- **WHEN** structured results carry caller timestamps that differ from their orchestrator acceptance order
+- **THEN** canonical replay follows the orchestrator's recorded order rather than resorting events by caller time
+
+#### Scenario: Atomic state replacement is interrupted
+- **WHEN** canonical-state replacement is interrupted before commit
+- **THEN** Guardrails retains the prior valid canonical store or reports an explicit state error without treating a partial file as valid
 
 #### Scenario: Generated-state directory redirects outside the change
-- **WHEN** the generated-state path is a symbolic link, junction, replaced ancestor, or other path that resolves outside the active change workspace
+- **WHEN** an existing generated-state path is a symbolic link, junction, non-directory, or other path that resolves outside the active change workspace
 - **THEN** Guardrails fails closed without reading, writing, or deleting the external target
 
-#### Scenario: Previous companion version is needed
-- **WHEN** a user needs a version 1-compatible state after version 2 history exists
-- **THEN** Guardrails creates or restores a separate compatible representation while preserving the readable canonical version 2 history
+#### Scenario: Windows junction redirects an existing generated path
+- **WHEN** an existing generated-state path is a Windows junction or equivalent reparse point that resolves outside the active change workspace
+- **THEN** Guardrails rejects the path before accessing the external target

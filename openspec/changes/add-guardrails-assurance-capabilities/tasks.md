@@ -80,7 +80,7 @@
 - [x] 8.7 Implement repository-policy checks for versioning, compatibility ranges, release notes or changesets, and documented installation commands.
 - [x] 8.8 Implement isolated previous-version upgrade scenarios and rollback evidence, requiring human disposition for unavailable, destructive, or irreversible rollback.
 - [x] 8.9 Route quick mode to required pack/install/public-smoke evidence, guarded mode to applicable metadata/upgrade/rollback checks, and full mode to configured platform and compatibility matrices without claiming omitted required checks passed.
-- [ ] 8.10 Verify release drivers on Linux, macOS, and Windows, including paths with spaces, missing tools, unavailable registries, package scripts, cleanup after partial failure, and proof that no external publication occurred.
+- [ ] 8.10 Verify private artifact and install checks on Linux, macOS, and Windows, including paths with spaces, missing tools, disabled lifecycle scripts, cleanup after partial failure, bounded and redacted output, and proof that no external publication occurred.
 
 ## 9. Integrate Workflows, Configuration, Status, and Gates
 
@@ -101,10 +101,12 @@
 - [ ] 10.5 Run hosted Linux, macOS, and Windows matrices for portable references, atomic state, debug resume, UAT evidence, temporary release projects, clean installs, and CLI entry points.
 - [x] 10.6 Run extension conformance and all contributed workflow-generation tests against every supported API-bearing OpenSpec version and a fresh official-upstream patch build.
 - [x] 10.7 Pack the companion release candidate, inspect its published file list and dependency metadata, install the actual candidate with the released core seam in a clean project, and exercise all five contributed workflows through installed host discovery.
-- [ ] 10.8 After completing the independent-review remediation tasks in sections 11 and 12, rerun independent code review, adversarial security probes, requirement-to-scenario coverage verification, and final goal verification with every original and newly discovered blocking finding dispositioned.
-- [ ] 10.9 Prepare the companion as a new minor version for private link or packed-artifact installation only after the v1 baseline is verified, all required matrices pass, migration guidance is complete, and the installed artifact passes conformance; defer package-registry publication.
+- [ ] 10.8 After completing the independent-review remediation and de-complexity tasks in sections 11 through 13, rerun independent code, security-boundary, maintainability, requirement-to-scenario coverage, and final goal review with every original and newly discovered blocking finding dispositioned.
+- [ ] 10.9 Prepare the companion as a new minor version for private link or packed-artifact installation only after active generated state is inventoried, de-complexification is complete, all required matrices pass, regeneration or one-time conversion guidance is complete, and the installed artifact passes conformance; defer package-registry publication.
 
 ## 11. Remediate Independent Review Findings
+
+Completed tasks 2.5-2.7, 8.8, 10.4, 11.2-11.3, 11.9-11.11, 12.2-12.3, 12.6, and 12.8-12.9 record historical implementation and review work. Section 13 supersedes their multi-writer, hostile-filesystem, permanent downgrade, caller-selected authority, generalized upgrade/rollback, and Guardrails-built isolation mechanisms wherever they conflict with the accepted assurance boundary.
 
 - [x] 11.1 Add RED adversarial tests proving archive cannot be satisfied by forged or stale `run.json` and `assurance.json`, then make the gate replay canonical events, validate reproducible projections, and fail closed on missing, corrupt, or divergent canonical state for every supported state version.
 - [x] 11.2 Add a multi-process contention test in which every successful unique append survives exactly once, including a live writer exceeding the normal lease interval, then serialize event commits with bounded cross-process locking, safe live-owner/stale-lock handling, fencing, re-read-before-write, and post-commit event verification.
@@ -137,6 +139,34 @@
 - [x] 12.11 Correct the assurance test map against the re-review probes and add semantic assertions for the claimed concurrency, containment, staleness, retest, constrained-runner, upgrade-state, and installed-workflow evidence while retaining historical RED provenance as `human_needed`.
 - [x] 12.12 Run every re-review adversarial probe plus the complete companion, core-seam, conformance, migration, upstream-survivability, and local release-install suites; record exact evidence and leave hosted cross-platform or historical fail-first gaps unresolved rather than claiming coverage.
 
+## 13. De-complexify the Assurance Architecture
+
+- [x] 13.1 Inventory actual active version 1 generated state and private consumers of compatibility exports, per-domain reports, configuration fields, and broad package exports; record which require one-time conversion and which can be deleted.
+- [ ] 13.2 Add RED tests proving roles cannot write canonical state, caller timestamps cannot reorder accepted events, and higher tiers return structured results; route all canonical writes through one orchestrator and remove event-level leases, heartbeat, PID liveness, stale-lock stealing, quarantine, fencing, and direct role writes.
+- [ ] 13.3 Retain explicit generated-path registration, change-root containment, existing symbolic-link and junction rejection, unique temporary writes, and atomic replacement; remove subprocess ancestor-identity writers, hostile swap handling, and lock-lifecycle path machinery while preserving portable Linux, macOS, and Windows behavior.
+- [ ] 13.4 Collapse the unpublished schema and runtime paths, remove permanent version 1 compatibility and downgrade exports, eliminate redundant per-domain report projections, and consolidate duplicated version 1 and version 2 modules without introducing version 3; retain a one-time importer only if task 13.1 finds real active version 1 evidence.
+- [ ] 13.5 Add RED status tests for forged, stale, missing, and corrupt projections; factor canonical load, validation, replay, and projection comparison into one read-only path shared by gate, check, status, and projection regeneration.
+- [ ] 13.6 Add RED provenance and debugging tests; make the orchestrator assign privileged workflow roles, remove caller selection of verifier and human actor kinds, bind resolution to existing RED and GREEN evidence for the same check and subject at current revisions, and require distinct verifier-stage or explicit-human actions.
+- [ ] 13.7 Add RED configured-surface precedence tests for packages, CLIs, extensions or plugins, and generic distributions; implement disablement, then enabled configuration, then discovery precedence and trim release assurance to private packing, inspection, clean installation, metadata, public entry points, and host discovery.
+- [ ] 13.8 Remove generic upgrade and rollback state contracts, previous-artifact machinery, Guardrails-provided filesystem and network isolation claims, and adversarial sandbox tests; retain temporary workspaces, minimal environment, redaction, argument-vector execution, disabled lifecycle scripts, no-publication behavior, and host-capability escalation.
+- [ ] 13.9 Narrow public exports and configuration, remove incidental tests, update CLI help, README, compatibility guidance, maintenance documentation, capability maps, and generated-file registries, and preserve outcome-focused Tier 0, Tier 1, Tier 2, gate, readiness, finding, debug, UAT, install, and core-boundary tests.
+- [ ] 13.10 Run build, type-check, lint, full companion tests, conformance, core-seam tests, installed private-artifact verification, upstream-survivability checks, and available Linux, macOS, and Windows tests; record exact evidence and leave unavailable hosted evidence unresolved.
+- [ ] 13.11 Request a fresh independent code, security-boundary, maintainability, and goal review against the accepted threat model; disposition every blocking finding before private version preparation.
+
+## De-complexity Audit Evidence — 2026-08-13
+
+- Audit target: OpenSpec `3d1b9eb665148bb2b30141a12cd4d901b448ab50` and companion `bccb4501a48f04b01063077f26d89e57377ad899`.
+- Independent verdict: `OVERBUILT`; the assurance workflow remains valuable, while multi-writer state, hostile-local-filesystem defenses, permanent intermediate-schema compatibility, and release sandbox machinery exceed the accepted boundary.
+- Audit-time companion type-check and lint passed; all 159 companion tests passed after sandbox-dependent release tests were rerun with local cache and loopback access.
+- Audit-time OpenSpec extension-seam suites passed 43 tests and the seam-budget check passed.
+- No implementation remediation is represented as complete by this audit; section 13 remains required.
+
+## De-complexity Implementation Evidence — 2026-08-13
+
+- Task 13.1 inventory searched repositories beneath `/Users/akriz/code` while excluding dependency and Git metadata trees; no active `.guardrails/events.json`, `run.json`, or `assurance.json` state was found.
+- No private source consumer imports the companion package API. Compatibility exports, downgrade state, per-domain reports, generalized release state contracts, and isolation fields are referenced only by companion source, tests, and documentation.
+- No one-time version 1 importer is required for active state. Intermediate local state may be regenerated with explicit human reconfirmation where applicable.
+
 ## Local Verification Evidence — 2026-08-13
 
 - Companion candidate: commits `d993f1a`, `1eab098`, and `bccb450` on `codex/harden-guardrails-maintainability`.
@@ -148,4 +178,4 @@
 - `pnpm run check:extension-seam`: passed with no budget violations.
 - `openspec validate add-guardrails-assurance-capabilities --strict`: passed.
 - `pnpm run check:upstream-survivability`: passed against official upstream revision `2826b8889e5223a9a8095d4428b60b56597e1020`; the maintained patch applied with the three-way strategy and all 8 upstream-worktree seam files passed (61 tests).
-- Intentionally unresolved: hosted Linux/macOS/Windows evidence (8.10 and 10.5), historical fail-first provenance recorded as `human_needed`, genuinely independent re-review (10.8), and private minor-version preparation gated on those prerequisites (10.9).
+- Intentionally unresolved: hosted Linux/macOS/Windows evidence (8.10 and 10.5), historical fail-first provenance recorded as `human_needed`, de-complexification and its independent review (section 13 and 10.8), and private minor-version preparation gated on those prerequisites (10.9).
