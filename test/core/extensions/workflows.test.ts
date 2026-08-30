@@ -287,6 +287,51 @@ describe('extension workflow contributions', () => {
     ))).rejects.toMatchObject({ code: expect.any(String) });
   });
 
+  it('preserves a ledger-matching predecessor when it also has a foreign ownership marker', async () => {
+    const root = await addExtension('fixture-extension');
+    const context = {
+      projectRoot,
+      coreVersion: '1.9.0',
+      hostCapabilities,
+      lockfile: await import('../../../src/core/extensions/index.js').then((m) =>
+        m.readExtensionLockfile(projectRoot)
+      ),
+    };
+    const generated = await reconcileExtensionWorkflows(context, {
+      configuredTools: ['cursor'],
+      delivery: 'commands',
+    });
+    const legacyPath = path.join(projectRoot, generated.artifacts[0].path);
+    const mixedOwnershipContent = [
+      (await readFile(legacyPath, 'utf8')).trimEnd(),
+      '<!-- openspec-extension:other-extension@1.0.0/fixture-run/cursor/command -->',
+      '',
+    ].join('\n');
+    await writeFile(legacyPath, mixedOwnershipContent);
+    await writeExtensionReconciliationRecord(projectRoot, {
+      version: 1,
+      lockDigest: 'legacy-digest',
+      status: 'ok',
+      updatedAt: new Date().toISOString(),
+      diagnostics: [],
+      artifacts: [{
+        ...generated.artifacts[0],
+        contentDigest: createHash('sha256').update(mixedOwnershipContent).digest('hex'),
+      }],
+    });
+    await replaceWorkflow(root, 'fixture-extension', 'fixture-do', ['fixture-run']);
+
+    const replaced = await reconcileExtensionWorkflows(context, {
+      configuredTools: ['cursor'],
+      delivery: 'commands',
+    });
+
+    expect(await readFile(legacyPath, 'utf8')).toBe(mixedOwnershipContent);
+    expect(replaced.diagnostics).toContain(
+      `Preserved retired-path ownership conflict at ${retiredCursorCommandPath}; expected extension 'fixture-extension' but found 'other-extension'.`
+    );
+  });
+
   it('recoverably retires a modified tracked predecessor', async () => {
     const root = await addExtension('fixture-extension');
     const context = {

@@ -425,6 +425,17 @@ async function retireCandidate(
     return;
   }
   const content = await fs.readFile(candidate.absolutePath, 'utf8');
+  const markerExtensions = ownershipMarkerExtensions(content, candidate);
+  const conflictingExtension = [...markerExtensions].find(
+    (extensionId) => extensionId !== candidate.extensionId
+  );
+  if (conflictingExtension !== undefined) {
+    diagnostics.push(
+      `Preserved retired-path ownership conflict at ${candidate.path}; `
+      + `expected extension '${candidate.extensionId}' but found '${conflictingExtension}'.`
+    );
+    return;
+  }
   const priorMatches = prior !== undefined
     && prior.extensionId === candidate.extensionId
     && prior.workflowId === candidate.workflowId
@@ -436,17 +447,6 @@ async function retireCandidate(
     await fs.rm(candidate.absolutePath);
     await fs.rmdir(path.dirname(candidate.absolutePath)).catch(() => undefined);
     diagnostics.push(`Deleted unchanged retired extension artifact at ${candidate.path}.`);
-    return;
-  }
-  const markerExtensions = ownershipMarkerExtensions(content, candidate);
-  const conflictingExtension = [...markerExtensions].find(
-    (extensionId) => extensionId !== candidate.extensionId
-  );
-  if (conflictingExtension !== undefined) {
-    diagnostics.push(
-      `Preserved retired-path ownership conflict at ${candidate.path}; `
-      + `expected extension '${candidate.extensionId}' but found '${conflictingExtension}'.`
-    );
     return;
   }
   if (!markerExtensions.has(candidate.extensionId)) {
