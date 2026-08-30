@@ -19,10 +19,10 @@
 
 ## 3. Verify the Generic Seam
 
-- [ ] 3.1 Complete GREEN and REFACTOR passes for manifest compatibility, exact-path retirement, deletion proof, recovery safety, idempotency, diagnostics, and legacy-manifest behavior.
+- [x] 3.1 Complete GREEN and REFACTOR passes for manifest compatibility, exact-path retirement, deletion proof, recovery safety, idempotency, diagnostics, and legacy-manifest behavior.
 - [x] 3.2 Add extension conformance fixtures for declarative replacement without introducing extension-specific policy or executable migration hooks.
 - [x] 3.3 Document the `replaces` field, recovery location, ownership rules, diagnostics, and downstream adoption sequence for extension authors and operators.
-- [ ] 3.4 Run formatting, lint, type-check, build, focused extension tests, the full OpenSpec suite, and strict validation of this change.
-- [ ] 3.5 Run Windows and Linux CI coverage for path and recovery behavior and verify macOS locally.
-- [ ] 3.6 Run the maintained extension-seam budget and upstream-survivability check; stop for explicit API-version or seam-budget review if the optional v1 field cannot remain backwards-compatible and bounded.
-- [ ] 3.7 Hand the verified generic seam back to `add-gsd-discussion-and-semantic-planning` so that change—not core—declares the concrete `run`/`run-status` replacements and completes installed migration acceptance.
+- [x] 3.4 Run formatting, lint, type-check, build, focused extension tests, the full OpenSpec suite, and strict validation of this change.
+- [x] 3.5 Run Windows and Linux CI coverage for path and recovery behavior and verify macOS locally.
+- [x] 3.6 Run the maintained extension-seam budget and upstream-survivability check; stop for explicit API-version or seam-budget review if the optional v1 field cannot remain backwards-compatible and bounded.
+- [x] 3.7 Hand the verified generic seam back to `add-gsd-discussion-and-semantic-planning` so that change—not core—declares the concrete `run`/`run-status` replacements and completes installed migration acceptance.
