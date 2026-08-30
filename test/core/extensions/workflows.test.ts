@@ -448,6 +448,39 @@ describe('extension workflow contributions', () => {
     );
   });
 
+  it('preserves a retired file when any ownership marker belongs to another extension', async () => {
+    await addExtension('fixture-extension', {
+      workflowId: 'fixture-do',
+      replaces: ['fixture-run'],
+    });
+    const content = [
+      'content',
+      '<!-- openspec-extension:fixture-extension@1.0.0/fixture-run/cursor/command -->',
+      '<!-- openspec-extension:other-extension@1.0.0/fixture-run/cursor/command -->',
+      '',
+    ].join('\n');
+    const retiredPath = path.join(projectRoot, retiredCursorCommandPath);
+    await mkdir(path.dirname(retiredPath), { recursive: true });
+    await writeFile(retiredPath, content);
+
+    const result = await reconcileExtensionWorkflows({
+      projectRoot,
+      coreVersion: '1.9.0',
+      hostCapabilities,
+      lockfile: await import('../../../src/core/extensions/index.js').then((m) =>
+        m.readExtensionLockfile(projectRoot)
+      ),
+    }, {
+      configuredTools: ['cursor'],
+      delivery: 'commands',
+    });
+
+    expect(await readFile(retiredPath, 'utf8')).toBe(content);
+    expect(result.diagnostics).toContain(
+      `Preserved retired-path ownership conflict at ${retiredCursorCommandPath}; expected extension 'fixture-extension' but found 'other-extension'.`
+    );
+  });
+
   it('preserves a retired-path directory as an unsafe entry', async () => {
     await addExtension('fixture-extension', {
       workflowId: 'fixture-do',
@@ -537,6 +570,44 @@ describe('extension workflow contributions', () => {
       `Preserved retired extension artifact at ${retiredCursorCommandPath}; recovery path is unsafe`
     ));
     await expect(readFile(path.join(externalRecovery, 'fixture-extension')))
+      .rejects.toMatchObject({ code: expect.any(String) });
+  });
+
+  it.skipIf(process.platform === 'win32')('refuses recovery through a project-internal filesystem alias', async () => {
+    const root = await addExtension('fixture-extension');
+    const context = {
+      projectRoot,
+      coreVersion: '1.9.0',
+      hostCapabilities,
+      lockfile: await import('../../../src/core/extensions/index.js').then((m) =>
+        m.readExtensionLockfile(projectRoot)
+      ),
+    };
+    const retiredPath = path.join(projectRoot, retiredCursorCommandPath);
+    await reconcileExtensionWorkflows(context, {
+      configuredTools: ['cursor'],
+      delivery: 'commands',
+    });
+    const aliasedRecovery = path.join(projectRoot, 'internal-recovery');
+    await mkdir(aliasedRecovery, { recursive: true });
+    await symlink(
+      aliasedRecovery,
+      path.join(projectRoot, 'openspec', 'extension-recovery')
+    );
+    await replaceWorkflow(root, 'fixture-extension', 'fixture-do', ['fixture-run']);
+
+    const result = await reconcileExtensionWorkflows(context, {
+      configuredTools: ['cursor'],
+      delivery: 'commands',
+    });
+
+    expect(await readFile(retiredPath, 'utf8')).toContain(
+      '<!-- openspec-extension:fixture-extension@1.0.0/fixture-run/cursor/command -->'
+    );
+    expect(result.diagnostics).toContainEqual(expect.stringContaining(
+      `Preserved retired extension artifact at ${retiredCursorCommandPath}; recovery path is unsafe`
+    ));
+    await expect(readFile(path.join(aliasedRecovery, 'fixture-extension')))
       .rejects.toMatchObject({ code: expect.any(String) });
   });
 

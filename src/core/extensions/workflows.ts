@@ -97,10 +97,11 @@ function withOwnership(content: string, marker: string): string {
   return `${content.replace(/\s+$/, '')}\n\n${marker}\n`;
 }
 
-function ownershipMarkerExtension(
+function ownershipMarkerExtensions(
   content: string,
   candidate: RetirementCandidate
-): string | undefined {
+): Set<string> {
+  const extensions = new Set<string>();
   const prefix = '<!-- openspec-extension:';
   const suffix = `/${candidate.workflowId}/${candidate.toolId}/${candidate.surface} -->`;
   for (const line of content.split(/\r?\n/)) {
@@ -110,9 +111,9 @@ function ownershipMarkerExtension(
     if (separator <= 0) continue;
     const extensionId = identity.slice(0, separator);
     const version = identity.slice(separator + 1);
-    if (isKebabId(extensionId) && validVersion(version) !== null) return extensionId;
+    if (isKebabId(extensionId) && validVersion(version) !== null) extensions.add(extensionId);
   }
-  return undefined;
+  return extensions;
 }
 
 function recoveryPath(
@@ -130,6 +131,29 @@ function recoveryPath(
     candidate.surface,
     `${contentDigest(content)}-${path.basename(candidate.absolutePath)}`
   );
+}
+
+async function assertRecoveryPathHasNoFilesystemAliases(
+  projectRoot: string,
+  recoveryArtifactPath: string
+): Promise<void> {
+  const root = path.resolve(projectRoot);
+  const target = path.resolve(recoveryArtifactPath);
+  FileSystemUtils.assertProjectArtifactPath(root, target);
+
+  let current = root;
+  for (const segment of path.relative(root, target).split(path.sep).filter(Boolean)) {
+    current = path.join(current, segment);
+    try {
+      const stats = await fs.lstat(current);
+      if (stats.isSymbolicLink()) {
+        throw new Error(`Filesystem alias is not allowed in recovery path: ${current}`);
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw error;
+    }
+  }
 }
 
 function resolveToolSurfaces(toolId: string, delivery: Delivery): ResolvedToolSurfaces | undefined {
@@ -414,15 +438,18 @@ async function retireCandidate(
     diagnostics.push(`Deleted unchanged retired extension artifact at ${candidate.path}.`);
     return;
   }
-  const markerExtension = ownershipMarkerExtension(content, candidate);
-  if (markerExtension !== undefined && markerExtension !== candidate.extensionId) {
+  const markerExtensions = ownershipMarkerExtensions(content, candidate);
+  const conflictingExtension = [...markerExtensions].find(
+    (extensionId) => extensionId !== candidate.extensionId
+  );
+  if (conflictingExtension !== undefined) {
     diagnostics.push(
       `Preserved retired-path ownership conflict at ${candidate.path}; `
-      + `expected extension '${candidate.extensionId}' but found '${markerExtension}'.`
+      + `expected extension '${candidate.extensionId}' but found '${conflictingExtension}'.`
     );
     return;
   }
-  if (markerExtension === undefined) {
+  if (!markerExtensions.has(candidate.extensionId)) {
     diagnostics.push(`Preserved retired-path entry at ${candidate.path}; matching extension ownership was not established.`);
     return;
   }
@@ -430,7 +457,10 @@ async function retireCandidate(
   const absoluteRecoveryPath = recoveryPath(context.projectRoot, candidate, content);
   const recovery = trackedPath(context.projectRoot, absoluteRecoveryPath);
   try {
-    FileSystemUtils.assertProjectArtifactPath(context.projectRoot, absoluteRecoveryPath);
+    await assertRecoveryPathHasNoFilesystemAliases(
+      context.projectRoot,
+      absoluteRecoveryPath
+    );
   } catch (error) {
     diagnostics.push(
       `Preserved retired extension artifact at ${candidate.path}; recovery path is unsafe: `
