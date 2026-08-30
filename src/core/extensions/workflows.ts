@@ -7,6 +7,7 @@ import {
   CommandAdapterRegistry,
   generateCommand,
   type CommandContent,
+  type ToolCommandAdapter,
 } from '../command-generation/index.js';
 import {
   resolveCommandInvocation,
@@ -15,6 +16,7 @@ import {
   shouldGenerateSkillsForTool,
 } from '../command-surface.js';
 import { getGlobalConfig, type Delivery } from '../global-config.js';
+import { isKebabId } from '../id.js';
 import { getConfiguredToolsForProfileSync } from '../profile-sync-drift.js';
 import { generateSkillContent } from '../shared/skill-generation.js';
 import type { SkillTemplate } from '../templates/types.js';
@@ -58,6 +60,14 @@ interface RetirementCandidate {
   absolutePath: string;
 }
 
+interface ResolvedToolSurfaces {
+  toolId: string;
+  skillsDir: string;
+  skills: boolean;
+  commands: boolean;
+  adapter?: ToolCommandAdapter;
+}
+
 function contentDigest(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
@@ -87,14 +97,22 @@ function withOwnership(content: string, marker: string): string {
   return `${content.replace(/\s+$/, '')}\n\n${marker}\n`;
 }
 
-function hasMatchingOwnershipMarker(content: string, candidate: RetirementCandidate): boolean {
-  const prefix = `<!-- openspec-extension:${candidate.extensionId}@`;
+function ownershipMarkerExtension(
+  content: string,
+  candidate: RetirementCandidate
+): string | undefined {
+  const prefix = '<!-- openspec-extension:';
   const suffix = `/${candidate.workflowId}/${candidate.toolId}/${candidate.surface} -->`;
-  return content.split(/\r?\n/).some((line) => {
-    if (!line.startsWith(prefix) || !line.endsWith(suffix)) return false;
-    const version = line.slice(prefix.length, line.length - suffix.length);
-    return validVersion(version) !== null;
-  });
+  for (const line of content.split(/\r?\n/)) {
+    if (!line.startsWith(prefix) || !line.endsWith(suffix)) continue;
+    const identity = line.slice(prefix.length, line.length - suffix.length);
+    const separator = identity.lastIndexOf('@');
+    if (separator <= 0) continue;
+    const extensionId = identity.slice(0, separator);
+    const version = identity.slice(separator + 1);
+    if (isKebabId(extensionId) && validVersion(version) !== null) return extensionId;
+  }
+  return undefined;
 }
 
 function recoveryPath(
@@ -112,6 +130,45 @@ function recoveryPath(
     candidate.surface,
     `${contentDigest(content)}-${path.basename(candidate.absolutePath)}`
   );
+}
+
+function resolveToolSurfaces(toolId: string, delivery: Delivery): ResolvedToolSurfaces | undefined {
+  const tool = AI_TOOLS.find((candidate) => candidate.value === toolId);
+  if (!tool?.skillsDir) return undefined;
+  return {
+    toolId,
+    skillsDir: tool.skillsDir,
+    skills: shouldGenerateSkillsForTool(toolId, delivery),
+    commands: shouldGenerateCommandsForTool(toolId, delivery),
+    adapter: CommandAdapterRegistry.get(toolId),
+  };
+}
+
+function commandArtifactPath(
+  projectRoot: string,
+  adapter: ToolCommandAdapter,
+  workflowId: string
+): string {
+  const generatedPath = adapter.getFilePath(workflowId);
+  return path.isAbsolute(generatedPath) ? generatedPath : path.join(projectRoot, generatedPath);
+}
+
+function skillArtifactPath(
+  projectRoot: string,
+  skillsDir: string,
+  workflowId: string
+): string {
+  return path.join(projectRoot, skillsDir, 'skills', `openspec-${workflowId}`, 'SKILL.md');
+}
+
+function retirementCandidateKey(candidate: RetirementCandidate): string {
+  return JSON.stringify([
+    candidate.path,
+    candidate.extensionId,
+    candidate.workflowId,
+    candidate.toolId,
+    candidate.surface,
+  ]);
 }
 
 export async function normalizeExtensionWorkflows(
@@ -198,14 +255,12 @@ async function buildDesiredArtifacts(
     workflows.map((workflow) => [workflow.workflow.id, workflow.skill.name])
   );
   for (const toolId of configuredTools) {
-    const tool = AI_TOOLS.find((candidate) => candidate.value === toolId);
-    if (!tool?.skillsDir) {
+    const surfaces = resolveToolSurfaces(toolId, delivery);
+    if (!surfaces) {
       diagnostics.push(`Tool '${toolId}' has no supported skill directory; extension workflows were skipped.`);
       continue;
     }
-    const skills = shouldGenerateSkillsForTool(toolId, delivery);
-    const commands = shouldGenerateCommandsForTool(toolId, delivery);
-    if (!skills && !commands) {
+    if (!surfaces.skills && !surfaces.commands) {
       diagnostics.push(
         `Tool '${toolId}' cannot represent extension workflows with delivery '${delivery}'.`
       );
@@ -213,21 +268,22 @@ async function buildDesiredArtifacts(
     }
 
     for (const workflow of workflows) {
-      if (commands) {
-        const adapter = CommandAdapterRegistry.get(toolId);
-        if (!adapter) {
+      if (surfaces.commands) {
+        if (!surfaces.adapter) {
           diagnostics.push(
             `Tool '${toolId}' has no command adapter for workflow '${workflow.workflow.id}'.`
           );
         } else {
           const generated = generateCommand(
             workflow.command,
-            adapter,
+            surfaces.adapter,
             Object.keys(extensionSkillNames)
           );
-          const absolutePath = path.isAbsolute(generated.path)
-            ? generated.path
-            : path.join(context.projectRoot, generated.path);
+          const absolutePath = commandArtifactPath(
+            context.projectRoot,
+            surfaces.adapter,
+            workflow.workflow.id
+          );
           desired.push(
             desiredArtifact(
               context,
@@ -240,13 +296,11 @@ async function buildDesiredArtifacts(
           );
         }
       }
-      if (skills) {
-        const skillFile = path.join(
+      if (surfaces.skills) {
+        const skillFile = skillArtifactPath(
           context.projectRoot,
-          tool.skillsDir,
-          'skills',
-          workflow.skill.name,
-          'SKILL.md'
+          surfaces.skillsDir,
+          workflow.workflow.id
         );
         const transformer = getTransformerForTool(
           toolId,
@@ -279,19 +333,16 @@ function buildRetirementCandidates(
 ): RetirementCandidate[] {
   const candidates = new Map<string, RetirementCandidate>();
   for (const toolId of configuredTools) {
-    const tool = AI_TOOLS.find((candidate) => candidate.value === toolId);
-    if (!tool?.skillsDir) continue;
-    const skills = shouldGenerateSkillsForTool(toolId, delivery);
-    const commands = shouldGenerateCommandsForTool(toolId, delivery);
+    const surfaces = resolveToolSurfaces(toolId, delivery);
+    if (!surfaces) continue;
     for (const workflow of workflows) {
       for (const workflowId of workflow.workflow.replaces) {
-        if (commands) {
-          const adapter = CommandAdapterRegistry.get(toolId);
-          if (adapter) {
-            const generatedPath = adapter.getFilePath(workflowId);
-            const absolutePath = path.isAbsolute(generatedPath)
-              ? generatedPath
-              : path.join(context.projectRoot, generatedPath);
+        if (surfaces.commands && surfaces.adapter) {
+            const absolutePath = commandArtifactPath(
+              context.projectRoot,
+              surfaces.adapter,
+              workflowId
+            );
             const candidate: RetirementCandidate = {
               extensionId: workflow.extensionId,
               workflowId,
@@ -300,19 +351,13 @@ function buildRetirementCandidates(
               path: trackedPath(context.projectRoot, absolutePath),
               absolutePath,
             };
-            candidates.set(
-              `${candidate.path}\0${candidate.extensionId}\0${workflowId}\0${toolId}\0command`,
-              candidate
-            );
-          }
+            candidates.set(retirementCandidateKey(candidate), candidate);
         }
-        if (skills) {
-          const absolutePath = path.join(
+        if (surfaces.skills) {
+          const absolutePath = skillArtifactPath(
             context.projectRoot,
-            tool.skillsDir,
-            'skills',
-            `openspec-${workflowId}`,
-            'SKILL.md'
+            surfaces.skillsDir,
+            workflowId
           );
           const candidate: RetirementCandidate = {
             extensionId: workflow.extensionId,
@@ -322,10 +367,7 @@ function buildRetirementCandidates(
             path: trackedPath(context.projectRoot, absolutePath),
             absolutePath,
           };
-          candidates.set(
-            `${candidate.path}\0${candidate.extensionId}\0${workflowId}\0${toolId}\0skill`,
-            candidate
-          );
+          candidates.set(retirementCandidateKey(candidate), candidate);
         }
       }
     }
@@ -337,13 +379,21 @@ async function retireCandidate(
   context: ExtensionReconcileContext,
   candidate: RetirementCandidate,
   prior: ExtensionGeneratedArtifactV1 | undefined,
+  priorDiagnostics: readonly string[],
   diagnostics: string[]
 ): Promise<void> {
   let entry: Awaited<ReturnType<typeof fs.lstat>>;
   try {
     entry = await fs.lstat(candidate.absolutePath);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      const priorOutcome = priorDiagnostics.find((diagnostic) =>
+        diagnostic === `Deleted unchanged retired extension artifact at ${candidate.path}.`
+        || diagnostic.startsWith(`Recovered retired extension artifact from ${candidate.path} to `)
+      );
+      if (priorOutcome) diagnostics.push(priorOutcome);
+      return;
+    }
     throw error;
   }
   if (!entry.isFile() || entry.isSymbolicLink()) {
@@ -364,13 +414,30 @@ async function retireCandidate(
     diagnostics.push(`Deleted unchanged retired extension artifact at ${candidate.path}.`);
     return;
   }
-  if (!hasMatchingOwnershipMarker(content, candidate)) {
+  const markerExtension = ownershipMarkerExtension(content, candidate);
+  if (markerExtension !== undefined && markerExtension !== candidate.extensionId) {
+    diagnostics.push(
+      `Preserved retired-path ownership conflict at ${candidate.path}; `
+      + `expected extension '${candidate.extensionId}' but found '${markerExtension}'.`
+    );
+    return;
+  }
+  if (markerExtension === undefined) {
     diagnostics.push(`Preserved retired-path entry at ${candidate.path}; matching extension ownership was not established.`);
     return;
   }
 
   const absoluteRecoveryPath = recoveryPath(context.projectRoot, candidate, content);
   const recovery = trackedPath(context.projectRoot, absoluteRecoveryPath);
+  try {
+    FileSystemUtils.assertProjectArtifactPath(context.projectRoot, absoluteRecoveryPath);
+  } catch (error) {
+    diagnostics.push(
+      `Preserved retired extension artifact at ${candidate.path}; recovery path is unsafe: `
+      + `${(error as Error).message}`
+    );
+    return;
+  }
   await fs.mkdir(path.dirname(absoluteRecoveryPath), { recursive: true });
   let existingRecovery: string | undefined;
   try {
@@ -468,7 +535,13 @@ export async function reconcileExtensionWorkflows(
       diagnostics.push(`Preserved retired-path entry at ${candidate.path}; the path is active for another generated workflow.`);
       continue;
     }
-    await retireCandidate(context, candidate, previousByPath.get(candidate.path), diagnostics);
+    await retireCandidate(
+      context,
+      candidate,
+      previousByPath.get(candidate.path),
+      previous?.diagnostics ?? [],
+      diagnostics
+    );
   }
 
   for (const prior of previous?.artifacts ?? []) {

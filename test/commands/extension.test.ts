@@ -253,11 +253,21 @@ describe('extension lifecycle CLI', () => {
 
   it('doctor reports persisted workflow reconciliation outcomes', async () => {
     const extensionRoot = await createExtension();
+    const retiredPath = path.join('.cursor', 'commands', 'opsx-old.md');
+    const recoveryPath = path.join(
+      'openspec',
+      'extension-recovery',
+      'fixture-extension',
+      'old',
+      'cursor',
+      'command',
+      'hash-opsx-old.md'
+    );
     await run(['link', extensionRoot], {
       reconcile: async () => ({
         artifacts: [],
         diagnostics: [
-          'Recovered retired extension artifact from .cursor/commands/opsx-old.md to openspec/extension-recovery/fixture-extension/old/cursor/command/hash-opsx-old.md.',
+          `Recovered retired extension artifact from ${retiredPath} to ${recoveryPath}.`,
         ],
       }),
     });
@@ -266,7 +276,7 @@ describe('extension lifecycle CLI', () => {
     await run(['doctor', 'fixture-extension']);
 
     expect(log).toHaveBeenCalledWith(expect.stringContaining(
-      'Recovered retired extension artifact from .cursor/commands/opsx-old.md'
+      `Recovered retired extension artifact from ${retiredPath}`
     ));
   });
 });
