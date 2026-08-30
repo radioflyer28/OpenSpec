@@ -56,8 +56,29 @@ export const WorkflowContributionV1Schema = z
     artifactRequirements: z.array(z.string().min(1)).default([]),
     gateDependencies: z.array(z.string().min(1)).default([]),
     requiredHostCapabilities: z.array(HostCapabilityV1Schema).default([]),
+    replaces: z.array(KebabIdSchema('replaced workflow id')).default([]),
   })
-  .strict();
+  .strict()
+  .superRefine((workflow, ctx) => {
+    const seen = new Set<string>();
+    for (const [index, replacedId] of workflow.replaces.entries()) {
+      if (replacedId === workflow.id) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['replaces', index],
+          message: `workflow '${workflow.id}' cannot replace itself`,
+        });
+      }
+      if (seen.has(replacedId)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['replaces', index],
+          message: `duplicate replaced workflow id '${replacedId}'`,
+        });
+      }
+      seen.add(replacedId);
+    }
+  });
 
 export const GateContributionV1Schema = z
   .object({
@@ -90,6 +111,29 @@ const ContributionsV1Schema = z
           });
         }
         seen.add(contribution.id);
+      }
+    }
+    const activeWorkflowIds = new Set(contributions.workflows.map((workflow) => workflow.id));
+    const replacementOwners = new Map<string, number>();
+    for (const [workflowIndex, workflow] of contributions.workflows.entries()) {
+      for (const [replacementIndex, replacedId] of workflow.replaces.entries()) {
+        if (replacedId !== workflow.id && activeWorkflowIds.has(replacedId)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['workflows', workflowIndex, 'replaces', replacementIndex],
+            message: `replaced workflow id '${replacedId}' is still actively contributed by this extension`,
+          });
+        }
+        const priorOwner = replacementOwners.get(replacedId);
+        if (priorOwner !== undefined && priorOwner !== workflowIndex) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['workflows', workflowIndex, 'replaces', replacementIndex],
+            message: `replaced workflow id '${replacedId}' is already claimed by another workflow contribution`,
+          });
+        } else {
+          replacementOwners.set(replacedId, workflowIndex);
+        }
       }
     }
   });

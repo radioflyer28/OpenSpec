@@ -70,6 +70,14 @@ events, repair policy, review, verification, and host adapters. OpenSpec
 proposal, specs, design, and tasks remain the only human-maintained planning
 truth.
 
+Workflow renames use the generic optional `replaces` metadata on the successor
+contribution. Add it only after the API-bearing core revision is available and
+raise the extension's minimum compatible OpenSpec version accordingly. Relink
+or reinstall the extension, run `openspec extension doctor <id>`, inspect any
+reported files under `openspec/extension-recovery/`, and verify retired host
+entry points are absent before removing old recovery content. Concrete workflow
+names and migration policy remain in the companion repository.
+
 ## Distribution identity
 
 Until the extension seam is available in an official OpenSpec release, fork

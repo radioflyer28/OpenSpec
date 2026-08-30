@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { valid as validVersion } from 'semver';
 import { AI_TOOLS } from '../config.js';
 import {
   CommandAdapterRegistry,
@@ -48,6 +49,15 @@ interface DesiredArtifact {
   content: string;
 }
 
+interface RetirementCandidate {
+  extensionId: string;
+  workflowId: string;
+  toolId: string;
+  surface: 'command' | 'skill';
+  path: string;
+  absolutePath: string;
+}
+
 function contentDigest(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
@@ -75,6 +85,33 @@ function absoluteTrackedPath(projectRoot: string, artifactPath: string): string 
 
 function withOwnership(content: string, marker: string): string {
   return `${content.replace(/\s+$/, '')}\n\n${marker}\n`;
+}
+
+function hasMatchingOwnershipMarker(content: string, candidate: RetirementCandidate): boolean {
+  const prefix = `<!-- openspec-extension:${candidate.extensionId}@`;
+  const suffix = `/${candidate.workflowId}/${candidate.toolId}/${candidate.surface} -->`;
+  return content.split(/\r?\n/).some((line) => {
+    if (!line.startsWith(prefix) || !line.endsWith(suffix)) return false;
+    const version = line.slice(prefix.length, line.length - suffix.length);
+    return validVersion(version) !== null;
+  });
+}
+
+function recoveryPath(
+  projectRoot: string,
+  candidate: RetirementCandidate,
+  content: string
+): string {
+  return path.join(
+    projectRoot,
+    'openspec',
+    'extension-recovery',
+    candidate.extensionId,
+    candidate.workflowId,
+    candidate.toolId,
+    candidate.surface,
+    `${contentDigest(content)}-${path.basename(candidate.absolutePath)}`
+  );
 }
 
 export async function normalizeExtensionWorkflows(
@@ -234,6 +271,134 @@ async function buildDesiredArtifacts(
   return desired;
 }
 
+function buildRetirementCandidates(
+  context: ExtensionReconcileContext,
+  workflows: NormalizedExtensionWorkflow[],
+  configuredTools: string[],
+  delivery: Delivery
+): RetirementCandidate[] {
+  const candidates = new Map<string, RetirementCandidate>();
+  for (const toolId of configuredTools) {
+    const tool = AI_TOOLS.find((candidate) => candidate.value === toolId);
+    if (!tool?.skillsDir) continue;
+    const skills = shouldGenerateSkillsForTool(toolId, delivery);
+    const commands = shouldGenerateCommandsForTool(toolId, delivery);
+    for (const workflow of workflows) {
+      for (const workflowId of workflow.workflow.replaces) {
+        if (commands) {
+          const adapter = CommandAdapterRegistry.get(toolId);
+          if (adapter) {
+            const generatedPath = adapter.getFilePath(workflowId);
+            const absolutePath = path.isAbsolute(generatedPath)
+              ? generatedPath
+              : path.join(context.projectRoot, generatedPath);
+            const candidate: RetirementCandidate = {
+              extensionId: workflow.extensionId,
+              workflowId,
+              toolId,
+              surface: 'command',
+              path: trackedPath(context.projectRoot, absolutePath),
+              absolutePath,
+            };
+            candidates.set(
+              `${candidate.path}\0${candidate.extensionId}\0${workflowId}\0${toolId}\0command`,
+              candidate
+            );
+          }
+        }
+        if (skills) {
+          const absolutePath = path.join(
+            context.projectRoot,
+            tool.skillsDir,
+            'skills',
+            `openspec-${workflowId}`,
+            'SKILL.md'
+          );
+          const candidate: RetirementCandidate = {
+            extensionId: workflow.extensionId,
+            workflowId,
+            toolId,
+            surface: 'skill',
+            path: trackedPath(context.projectRoot, absolutePath),
+            absolutePath,
+          };
+          candidates.set(
+            `${candidate.path}\0${candidate.extensionId}\0${workflowId}\0${toolId}\0skill`,
+            candidate
+          );
+        }
+      }
+    }
+  }
+  return [...candidates.values()].sort((left, right) => left.path.localeCompare(right.path));
+}
+
+async function retireCandidate(
+  context: ExtensionReconcileContext,
+  candidate: RetirementCandidate,
+  prior: ExtensionGeneratedArtifactV1 | undefined,
+  diagnostics: string[]
+): Promise<void> {
+  let entry: Awaited<ReturnType<typeof fs.lstat>>;
+  try {
+    entry = await fs.lstat(candidate.absolutePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+    throw error;
+  }
+  if (!entry.isFile() || entry.isSymbolicLink()) {
+    diagnostics.push(`Preserved unsafe retired extension entry at ${candidate.path}; expected a regular generated file.`);
+    return;
+  }
+  const content = await fs.readFile(candidate.absolutePath, 'utf8');
+  const priorMatches = prior !== undefined
+    && prior.extensionId === candidate.extensionId
+    && prior.workflowId === candidate.workflowId
+    && prior.toolId === candidate.toolId
+    && prior.surface === candidate.surface
+    && contentDigest(content) === prior.contentDigest
+    && content.includes(prior.ownershipMarker);
+  if (priorMatches) {
+    await fs.rm(candidate.absolutePath);
+    await fs.rmdir(path.dirname(candidate.absolutePath)).catch(() => undefined);
+    diagnostics.push(`Deleted unchanged retired extension artifact at ${candidate.path}.`);
+    return;
+  }
+  if (!hasMatchingOwnershipMarker(content, candidate)) {
+    diagnostics.push(`Preserved retired-path entry at ${candidate.path}; matching extension ownership was not established.`);
+    return;
+  }
+
+  const absoluteRecoveryPath = recoveryPath(context.projectRoot, candidate, content);
+  const recovery = trackedPath(context.projectRoot, absoluteRecoveryPath);
+  await fs.mkdir(path.dirname(absoluteRecoveryPath), { recursive: true });
+  let existingRecovery: string | undefined;
+  try {
+    existingRecovery = await fs.readFile(absoluteRecoveryPath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  if (existingRecovery !== undefined && existingRecovery !== content) {
+    diagnostics.push(`Preserved retired extension artifact at ${candidate.path}; recovery collision at ${recovery}.`);
+    return;
+  }
+  if (existingRecovery === undefined) {
+    try {
+      await fs.writeFile(absoluteRecoveryPath, content, { flag: 'wx' });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+      existingRecovery = await fs.readFile(absoluteRecoveryPath, 'utf8');
+      if (existingRecovery !== content) {
+        diagnostics.push(`Preserved retired extension artifact at ${candidate.path}; recovery collision at ${recovery}.`);
+        return;
+      }
+    }
+  }
+  await fs.rm(candidate.absolutePath);
+  await fs.rmdir(path.dirname(candidate.absolutePath)).catch(() => undefined);
+  diagnostics.push(`Recovered retired extension artifact from ${candidate.path} to ${recovery}.`);
+}
+
 export async function reconcileExtensionWorkflows(
   context: ExtensionReconcileContext,
   options: ReconcileExtensionWorkflowOptions = {}
@@ -259,11 +424,18 @@ export async function reconcileExtensionWorkflows(
     delivery,
     diagnostics
   );
+  const retirementCandidates = buildRetirementCandidates(
+    context,
+    workflows,
+    configuredTools,
+    delivery
+  );
   const previous = await readExtensionReconciliationRecord(context.projectRoot);
   const previousByPath = new Map(
     (previous?.artifacts ?? []).map((artifact) => [artifact.path, artifact] as const)
   );
   const desiredPaths = new Set(desired.map((artifact) => artifact.record.path));
+  const retirementPaths = new Set(retirementCandidates.map((candidate) => candidate.path));
   const artifacts: ExtensionGeneratedArtifactV1[] = [];
 
   for (const artifact of desired) {
@@ -291,8 +463,16 @@ export async function reconcileExtensionWorkflows(
     artifacts.push(artifact.record);
   }
 
+  for (const candidate of retirementCandidates) {
+    if (desiredPaths.has(candidate.path)) {
+      diagnostics.push(`Preserved retired-path entry at ${candidate.path}; the path is active for another generated workflow.`);
+      continue;
+    }
+    await retireCandidate(context, candidate, previousByPath.get(candidate.path), diagnostics);
+  }
+
   for (const prior of previous?.artifacts ?? []) {
-    if (desiredPaths.has(prior.path)) continue;
+    if (desiredPaths.has(prior.path) || retirementPaths.has(prior.path)) continue;
     const absolutePath = absoluteTrackedPath(context.projectRoot, prior.path);
     let content: string;
     try {

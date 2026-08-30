@@ -250,4 +250,23 @@ describe('extension lifecycle CLI', () => {
     expect(log).toHaveBeenCalledWith(expect.stringContaining('compatibility=api-unavailable'));
     expect(log).toHaveBeenCalledWith(expect.stringContaining('API-bearing OpenSpec distribution'));
   });
+
+  it('doctor reports persisted workflow reconciliation outcomes', async () => {
+    const extensionRoot = await createExtension();
+    await run(['link', extensionRoot], {
+      reconcile: async () => ({
+        artifacts: [],
+        diagnostics: [
+          'Recovered retired extension artifact from .cursor/commands/opsx-old.md to openspec/extension-recovery/fixture-extension/old/cursor/command/hash-opsx-old.md.',
+        ],
+      }),
+    });
+    log.mockClear();
+
+    await run(['doctor', 'fixture-extension']);
+
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(
+      'Recovered retired extension artifact from .cursor/commands/opsx-old.md'
+    ));
+  });
 });
