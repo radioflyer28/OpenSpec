@@ -2182,8 +2182,10 @@ Old version content
         'utf-8'
       );
 
-      // Should contain generatedBy field
-      expect(updatedContent).toMatch(/generatedBy:\s*["']\d+\.\d+\.\d+["']/);
+      // Should contain the exact package version, including a valid prerelease
+      // suffix used by privately maintained builds.
+      const { version } = await import('../../package.json');
+      expect(updatedContent).toContain(`generatedBy: "${version}"`);
     });
   });
 
