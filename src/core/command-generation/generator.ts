@@ -24,11 +24,12 @@ import { transformCommandInvocations } from '../../utils/command-references.js';
  */
 export function generateCommand(
   content: CommandContent,
-  adapter: ToolCommandAdapter
+  adapter: ToolCommandAdapter,
+  additionalCommandIds: readonly string[] = []
 ): GeneratedCommand {
   const invocation = getInvocationForAdapter(adapter);
   const formatted = needsInvocationRewrite(invocation)
-    ? { ...content, body: transformCommandInvocations(content.body, invocation) }
+    ? { ...content, body: transformCommandInvocations(content.body, invocation, additionalCommandIds) }
     : content;
 
   return {
@@ -45,7 +46,8 @@ export function generateCommand(
  */
 export function generateCommands(
   contents: CommandContent[],
-  adapter: ToolCommandAdapter
+  adapter: ToolCommandAdapter,
+  additionalCommandIds: readonly string[] = []
 ): GeneratedCommand[] {
-  return contents.map((content) => generateCommand(content, adapter));
+  return contents.map((content) => generateCommand(content, adapter, additionalCommandIds));
 }

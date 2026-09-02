@@ -182,6 +182,16 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
         name: 'json',
         description: 'Output as JSON (non-interactive)',
       },
+      {
+        name: 'override-gate',
+        description: 'Override a currently blocking required gate (repeatable; requires --reason)',
+        takesValue: true,
+      },
+      {
+        name: 'reason',
+        description: 'Reason recorded for every requested gate override',
+        takesValue: true,
+      },
       COMMON_FLAGS.store,
     ],
   },
@@ -402,6 +412,59 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
     flags: [
       COMMON_FLAGS.json,
       COMMON_FLAGS.store,
+    ],
+  },
+  {
+    name: 'extension',
+    description: 'Install and manage project extensions',
+    flags: [],
+    subcommands: [
+      {
+        name: 'install',
+        description: 'Install a registry extension into this project',
+        acceptsPositional: true,
+        positionals: [{ name: 'package' }],
+        flags: [],
+      },
+      {
+        name: 'link',
+        description: 'Link a local extension into this project',
+        acceptsPositional: true,
+        positionalType: 'path',
+        positionals: [{ name: 'path', type: 'path' }],
+        flags: [],
+      },
+      {
+        name: 'enable',
+        description: 'Enable an installed project extension',
+        acceptsPositional: true,
+        positionals: [{ name: 'id' }],
+        flags: [],
+      },
+      {
+        name: 'disable',
+        description: 'Disable a project extension without removing recorded gate obligations',
+        acceptsPositional: true,
+        positionals: [{ name: 'id' }],
+        flags: [],
+      },
+      {
+        name: 'list',
+        description: 'List project extensions',
+        flags: [],
+      },
+      {
+        name: 'ls',
+        description: 'List project extensions',
+        flags: [],
+      },
+      {
+        name: 'doctor',
+        description: 'Diagnose one or all project extensions',
+        acceptsPositional: true,
+        positionals: [{ name: 'id', optional: true }],
+        flags: [],
+      },
     ],
   },
   {

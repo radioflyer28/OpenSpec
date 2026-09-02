@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "baseRevision": "a0ddb60d040c61f4907436a9d91310934b1dda63",
+  "productionRoot": "src",
+  "ownedPaths": [
+    "src/core/extensions/",
+    "src/commands/extension.ts"
+  ],
+  "maxAddedLines": 172,
+  "maxDeletedLines": 21,
+  "allowedPaths": {
+    "src/cli/index.ts": { "maxAdded": 9, "maxDeleted": 0 },
+    "src/core/archive.ts": { "maxAdded": 42, "maxDeleted": 0 },
+    "src/core/command-generation/generator.ts": { "maxAdded": 6, "maxDeleted": 4 },
+    "src/core/completions/command-registry.ts": { "maxAdded": 63, "maxDeleted": 0 },
+    "src/core/index.ts": { "maxAdded": 1, "maxDeleted": 0 },
+    "src/core/update.ts": { "maxAdded": 8, "maxDeleted": 0 },
+    "src/utils/command-references.ts": { "maxAdded": 43, "maxDeleted": 17 }
+  }
+}

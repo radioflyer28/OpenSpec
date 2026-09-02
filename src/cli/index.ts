@@ -33,6 +33,7 @@ import { registerStoreCommand } from '../commands/store.js';
 import { registerDoctorCommand } from '../commands/doctor.js';
 import { registerContextCommand } from '../commands/context.js';
 import { registerWorksetCommand } from '../commands/workset.js';
+import { registerExtensionCommand } from '../commands/extension.js';
 import {
   statusCommand,
   BATCH_STATUS_FAILURE_PAYLOAD,
@@ -483,6 +484,13 @@ program
   .option('--skip-specs', 'Skip spec update operations (useful for infrastructure, tooling, or doc-only changes)')
   .option('--no-validate', 'Skip validation (not recommended, requires confirmation)')
   .option('--json', 'Output as JSON (non-interactive)')
+  .option(
+    '--override-gate <id>',
+    'Override a currently blocking required gate (repeatable; requires --reason)',
+    (value: string, previous: string[]) => [...previous, value],
+    []
+  )
+  .option('--reason <text>', 'Reason recorded for every requested gate override')
   .option('--store <id>', STORE_OPTION_DESCRIPTION)
   .addOption(hiddenStorePathOption())
   .action(async (changeName?: string, options?: ArchiveOptions) => {
@@ -502,6 +510,7 @@ registerStoreCommand(program);
 registerDoctorCommand(program);
 registerContextCommand(program);
 registerWorksetCommand(program);
+registerExtensionCommand(program, { coreVersion: version });
 
 // Top-level validate command
 program

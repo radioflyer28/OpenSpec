@@ -1,0 +1,35 @@
+{
+  "apiVersion": "openspec.dev/extensions/v1",
+  "id": "fixture-extension",
+  "version": "1.0.0",
+  "requires": {
+    "openspec": ">=1.7.0 <2.0.0",
+    "hostCapabilities": {
+      "required": ["structuredResults"],
+      "optional": ["agentDispatch", "parallelism", "worktrees"]
+    }
+  },
+  "contributes": {
+    "workflows": [
+      {
+        "id": "fixture-run",
+        "name": "Fixture Run",
+        "description": "Exercise workflow discovery and generation.",
+        "entry": "workflows/run.md",
+        "artifactRequirements": ["proposal", "tasks"],
+        "gateDependencies": ["fixture.assurance"],
+        "requiredHostCapabilities": [],
+        "replaces": ["fixture-legacy-run"]
+      }
+    ],
+    "gates": [
+      {
+        "id": "fixture.assurance",
+        "module": "gate.mjs",
+        "export": "evaluateFixture",
+        "timeoutMs": 15000,
+        "requiredHostCapabilities": ["structuredResults"]
+      }
+    ]
+  }
+}
