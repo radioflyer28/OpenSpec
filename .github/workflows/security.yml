@@ -26,7 +26,10 @@ jobs:
   # Blocks a pull request that introduces a vulnerable or badly licensed dependency.
   dependency-review:
     name: Dependency Review
-    if: github.event_name == 'pull_request'
+    # GitHub Dependency Review requires Dependency Graph, which GitHub does not
+    # provide to fork repositories. Upstream PRs still receive the blocking
+    # review; forks retain the lockfile audit below.
+    if: github.event_name == 'pull_request' && github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
