@@ -157,6 +157,11 @@ opencode.json
 
 # Codex
 .codex/
+.pi/
+
+# Local agent prompt and skill workspaces
+.github/prompts/
+.github/skills/
 
 # Bob
 .bob/

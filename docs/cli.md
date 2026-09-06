@@ -647,6 +647,8 @@ openspec archive [change-name] [options]
 | `-y, --yes` | Skip confirmation prompts. Required when nothing can answer them — an AI agent, a CI job, or any run with stdin closed |
 | `--skip-specs` | Skip spec updates for one archive run. A change that permanently has no spec deltas should declare `skip_specs: true` in its `.openspec.yaml` instead — it archives with no flag |
 | `--no-validate` | Skip validation (requires confirmation). Also disables capability retirement — with no validator verdict, nothing is retired |
+| `--override-gate <id>` | Override one currently blocking required extension gate. Repeat for multiple gates; requires `--reason` |
+| `--reason <text>` | Non-empty audit reason recorded with every gate named by `--override-gate` |
 
 **Examples:**
 
@@ -662,17 +664,21 @@ openspec archive add-dark-mode --yes
 
 # Archive a tooling change that doesn't affect specs
 openspec archive update-ci-config --skip-specs
+
+# Deliberately override a blocking extension gate with an audit trail
+openspec archive urgent-fix --override-gate assurance --reason "Approved emergency release"
 ```
 
 **What it does:**
 
-1. Validates the change (unless `--no-validate`)
-2. Prompts for confirmation (unless `--yes`)
-3. Claims the archive destination before changing any main spec
-4. Validates and merges the active delta specs into `openspec/specs/` — a capability whose last requirement the change removes is retired, and its spec file deleted, but only when the change's `.openspec.yaml` declares `retire_capabilities: true` next to its `schema:`
-5. Moves the change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/`
-6. If a spec mutation or final move fails before a complete archive is secured, restores the specs and leaves or returns the change at its active path
-7. If a verified fallback copy completes but staged-source cleanup fails, retains the complete archive and committed spec state for recovery
+1. Evaluates required extension gates before any validation, prompt, or write
+2. Validates the change (unless `--no-validate`)
+3. Prompts for confirmation (unless `--yes`)
+4. Claims the archive destination before changing any main spec
+5. Validates and merges the active delta specs into `openspec/specs/` — a capability whose last requirement the change removes is retired, and its spec file deleted, but only when the change's `.openspec.yaml` declares `retire_capabilities: true` next to its `schema:`
+6. Moves the change folder to `openspec/changes/archive/YYYY-MM-DD-<name>/`
+7. If a spec mutation or final move fails before a complete archive is secured, restores the specs and leaves or returns the change at its active path
+8. If a verified fallback copy completes but staged-source cleanup fails, retains the complete archive and committed spec state for recovery
 
 **Without a terminal:** an AI agent, a CI job, or any run with stdin closed cannot
 answer step 2, so archive stops before touching anything, exits 1, and names the
