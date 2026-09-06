@@ -7,7 +7,7 @@ The Guardrails architecture correctly keeps OpenSpec artifacts authoritative, bu
 - Reduce the OpenSpec fork's upstream conflict surface by isolating extension behavior behind narrow integration calls and deferring unused contribution types from the supported v1 surface.
 - Give fork builds and the companion extension an unambiguous package/API compatibility identity until the generic extension seam is accepted upstream.
 - Make upstream-survivability CI fetch and test against the official `Fission-AI/OpenSpec` main branch on Linux, macOS, and Windows.
-- Make `openspec-guardrails` an independently versioned, committed, remotely hosted release unit with its own conformance and packaging matrix.
+- Make `openspec-guardrails` an independently versioned, committed, remotely hosted distribution unit with its own conformance and packaging matrix, installable privately through a link or packed artifact without package-registry publication.
 - Reconcile task progress from the current OpenSpec `tasks.md` during check and status operations so generated Guardrails records cannot become competing planning truth.
 - Add a host-neutral Tier 0 protocol for recording task execution, RED–GREEN–REFACTOR evidence, checker results, deviations, repairs, verification findings, and human acceptance.
 - Consume stable OpenSpec machine-readable artifact data where available and require explicit, stable task identifiers for durable evidence references.

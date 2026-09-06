@@ -83,4 +83,4 @@
 - [x] 9.5 Pack both release units, inspect their published file lists and dependency metadata, and prove the companion imports only the public extension API.
 - [x] 9.6 Document routine upstream update, seam rebase, compatibility diagnosis, release order, rollback, and transition-to-official-upstream procedures.
 - [x] 9.7 Confirm no Guardrails workflow creates `PROJECT.md`, `ROADMAP.md`, `PLAN.md`, `STATE.md`, phases, or milestones and that current OpenSpec artifacts remain the sole human-maintained planning truth.
-- [ ] 9.8 Publish the API-bearing fork prerelease, run companion conformance against the published artifact, then release Guardrails independently.
+- [x] 9.8 Publish the API-bearing fork prerelease, run companion conformance against the published artifact, pack Guardrails, and verify private installation through an extension link or local artifact without publishing to a package registry.

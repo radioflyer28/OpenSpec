@@ -130,9 +130,9 @@ Git commits, branches, and worktrees remain separate opt-ins. A worktree adapter
 
 ### 9. Make `openspec-guardrails` an independently governed repository
 
-The companion is committed with its own remote, protected main branch, changesets or equivalent release notes, cross-platform CI, package provenance, and release instructions. Its CI consumes released API-bearing OpenSpec builds plus a local patched-upstream build. OpenSpec core fixtures remain generic and never import Guardrails policy.
+The companion is committed with its own remote, protected main branch, cross-platform CI, package provenance, and private-install instructions. Its CI consumes released API-bearing OpenSpec builds plus a local patched-upstream build. OpenSpec core fixtures remain generic and never import Guardrails policy.
 
-The two repositories use an explicit release order when the seam changes: OpenSpec fork prerelease, companion conformance, Guardrails release. Guardrails-only policy changes skip the OpenSpec release.
+The two repositories use an explicit private-distribution order when the seam changes: OpenSpec fork prerelease, companion conformance, then companion installation through `openspec extension link` or a packed local artifact. Guardrails-only policy changes skip the OpenSpec fork prerelease. Public package-registry publication is deferred and is not a requirement for this release line.
 
 **Why:** A sibling directory without history or hosted automation is not an independent release unit in practice.
 
@@ -157,6 +157,6 @@ The two repositories use an explicit release order when the seam changes: OpenSp
 6. Add stable task-ID validation, artifact digests, the event schema/store, projection reconciliation, and stale-evidence handling in the companion.
 7. Add Tier 0 recording and acceptance commands, update the workflows to use them, and make repair/capability reporting honest.
 8. Run core, companion, cross-repository archive, failure-injection, packaging, and Linux/macOS/Windows suites.
-9. Publish an API-bearing OpenSpec fork prerelease, validate Guardrails against it, then publish Guardrails independently.
+9. Publish an API-bearing OpenSpec fork prerelease, validate Guardrails against it, then pack Guardrails and verify private installation through an extension link or local artifact; defer package-registry publication.
 
 Rollback preserves safety: a companion rollback continues reading v1 events and projections; a core rollback must continue enforcing already-recorded required gates. If a newer event kind is unsupported, Guardrails fails closed with upgrade guidance rather than discarding it. The fork-specific distribution identity remains until an official release demonstrably provides the same API.

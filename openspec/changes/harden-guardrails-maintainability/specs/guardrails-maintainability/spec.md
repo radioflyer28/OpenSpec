@@ -80,8 +80,8 @@ The Guardrails companion SHALL be versioned, tested, packaged, and released inde
 - **THEN** Guardrails conformance runs against the minimum and maximum supported API-bearing OpenSpec versions
 - **AND** installation and upgrade documentation gives the required release order
 
-#### Scenario: Cross-platform release candidate
-- **WHEN** either release unit is prepared for publication
+#### Scenario: Cross-platform distribution candidate
+- **WHEN** either release unit is prepared for private distribution or public publication
 - **THEN** Linux, macOS, and Windows build, conformance, packaging, and Tier 0 checks pass for that release candidate
 
 ### Requirement: The supported core seam stays generic and bounded
