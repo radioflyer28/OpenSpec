@@ -302,7 +302,7 @@ export class ExtensionLifecycleService {
     if (!entry) throw new Error(`Unknown extension '${id}'.`);
     const record = await readExtensionReconciliationRecord(this.projectRoot).catch(() => undefined);
     const reconciliation = reconciliationState(lockfile, record);
-    const diagnostics: string[] = [];
+    const diagnostics: string[] = [...(record?.diagnostics ?? [])];
     let root: string | undefined;
     let manifest: ExtensionManifestV1 | undefined;
     let sourceState: ExtensionInspection['sourceState'] = 'available';

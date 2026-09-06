@@ -18,7 +18,8 @@
         "entry": "workflows/run.md",
         "artifactRequirements": ["proposal", "tasks"],
         "gateDependencies": ["fixture.assurance"],
-        "requiredHostCapabilities": []
+        "requiredHostCapabilities": [],
+        "replaces": ["fixture-legacy-run"]
       }
     ],
     "gates": [

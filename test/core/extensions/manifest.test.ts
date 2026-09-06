@@ -64,6 +64,85 @@ describe('ExtensionManifestV1', () => {
     expect(result.diagnostics).toEqual([]);
   });
 
+  it('accepts explicit workflow replacements and defaults omitted replacements', () => {
+    const replacing = structuredClone(validManifest()) as Record<string, any>;
+    replacing.contributes.workflows[0].replaces = ['legacy-run', 'legacy-status'];
+
+    const replaced = loadExtensionManifestV1(replacing, '1.7.0');
+    const legacy = loadExtensionManifestV1(validManifest(), '1.7.0');
+
+    expect(replaced.diagnostics).toEqual([]);
+    expect(replaced.manifest?.contributes.workflows[0].replaces).toEqual([
+      'legacy-run',
+      'legacy-status',
+    ]);
+    expect(legacy.manifest?.contributes.workflows[0].replaces).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: 'invalid identifier',
+      replacements: ['Legacy Run'],
+      expectedPath: 'contributes.workflows.0.replaces.0',
+    },
+    {
+      name: 'duplicate identifier',
+      replacements: ['legacy-run', 'legacy-run'],
+      expectedPath: 'contributes.workflows.0.replaces.1',
+    },
+    {
+      name: 'self replacement',
+      replacements: ['fixture-run'],
+      expectedPath: 'contributes.workflows.0.replaces.0',
+    },
+  ])('rejects $name in workflow replacement metadata', ({ replacements, expectedPath }) => {
+    const invalid = structuredClone(validManifest()) as Record<string, any>;
+    invalid.contributes.workflows[0].replaces = replacements;
+
+    const result = loadExtensionManifestV1(invalid, '1.7.0');
+
+    expect(result.manifest).toBeUndefined();
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'extension_manifest_invalid',
+      path: expectedPath,
+    }));
+  });
+
+  it('rejects a replacement identifier still contributed by the same extension', () => {
+    const invalid = structuredClone(validManifest()) as Record<string, any>;
+    invalid.contributes.workflows[0].replaces = ['legacy-run'];
+    invalid.contributes.workflows.push({
+      ...invalid.contributes.workflows[0],
+      id: 'legacy-run',
+      replaces: [],
+    });
+
+    const result = loadExtensionManifestV1(invalid, '1.7.0');
+
+    expect(result.manifest).toBeUndefined();
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'extension_manifest_invalid',
+      path: 'contributes.workflows.0.replaces.0',
+    }));
+  });
+
+  it('rejects two successors claiming the same replaced workflow', () => {
+    const invalid = structuredClone(validManifest()) as Record<string, any>;
+    invalid.contributes.workflows[0].replaces = ['legacy-run'];
+    invalid.contributes.workflows.push({
+      ...invalid.contributes.workflows[0],
+      id: 'fixture-status',
+    });
+
+    const result = loadExtensionManifestV1(invalid, '1.7.0');
+
+    expect(result.manifest).toBeUndefined();
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({
+      code: 'extension_manifest_invalid',
+      path: 'contributes.workflows.1.replaces.0',
+    }));
+  });
+
   it('accepts compatibility range boundaries', () => {
     expect(loadExtensionManifestV1(validManifest(), '1.7.0').manifest).toBeDefined();
     expect(loadExtensionManifestV1(validManifest(), '1.99.0').manifest).toBeDefined();
@@ -154,7 +233,7 @@ describe('ExtensionManifestV1', () => {
             }],
       };
 
-      const result = loadExtensionManifestV1(input, '1.8.0-guardrails.1');
+      const result = loadExtensionManifestV1(input, '1.8.0-gsd.1');
 
       expect(result.manifest).toBeUndefined();
       expect(result.diagnostics).toContainEqual(
@@ -174,7 +253,7 @@ describe('ExtensionManifestV1', () => {
       gates: input.contributes.gates,
     };
 
-    const result = loadExtensionManifestV1(input, '1.8.0-guardrails.1');
+    const result = loadExtensionManifestV1(input, '1.8.0-gsd.1');
 
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest?.contributes).toMatchObject(input.contributes);
@@ -211,6 +290,7 @@ describe('ExtensionManifestV1', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.manifest?.contributes.workflows).toHaveLength(1);
+    expect(result.manifest?.contributes.workflows[0].replaces).toEqual(['fixture-legacy-run']);
     expect(result.manifest?.contributes.gates).toHaveLength(1);
     expect(result.manifest?.requires.hostCapabilities).toEqual({
       required: ['structuredResults'],

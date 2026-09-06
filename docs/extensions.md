@@ -61,7 +61,8 @@ The current manifest shape is:
       "entry": "workflows/run.md",
       "artifactRequirements": ["proposal", "tasks"],
       "gateDependencies": ["example.assurance"],
-      "requiredHostCapabilities": []
+      "requiredHostCapabilities": [],
+      "replaces": ["example-run-v1"]
     }],
     "gates": [{
       "id": "example.assurance",
@@ -94,10 +95,28 @@ OpenSpec owns these project files and directories:
   required-gate record.
 
 Commit the lockfile. Do not hand-edit generated records.
-Reconciliation removes only files whose recorded ownership and digest still
-match; modified or untracked files are preserved and reported as drift. A gate
-record survives extension disablement and moves with an archived change so a
-disable cannot silently erase an existing archive obligation.
+An active workflow may declare predecessor IDs with `replaces`. These IDs are
+retirement metadata, not executable aliases: OpenSpec generates only the active
+workflow and checks each predecessor's exact adapter-derived command and skill
+path. Replacement IDs must be valid and unique, cannot name the active workflow,
+and cannot remain active elsewhere in the same extension manifest.
+
+Reconciliation deletes a retired artifact only when its prior record proves the
+ownership marker and content digest are unchanged. A same-extension artifact
+whose marker is valid but whose content cannot be proven unchanged is removed
+from the active host path and preserved below
+`openspec/extension-recovery/<extension>/<workflow>/<tool>/<surface>/`. The
+content-addressed recovery filename makes repeated reconciliation idempotent;
+`openspec extension doctor <id>` reports the original and recovery paths.
+Inspect recovered content before deleting it manually.
+
+Unmarked files, files owned by another extension, filesystem aliases,
+directories, and recovery collisions remain untouched and are reported. No
+retirement operation scans directories or selects files by wildcard or name
+pattern. Ordinary reconciliation without `replaces` retains its existing
+behavior: modified or untracked files remain active and are reported as drift.
+A gate record survives extension disablement and moves with an archived change
+so a disable cannot silently erase an existing archive obligation.
 
 ## Trust boundary
 

@@ -55,6 +55,7 @@ describe('upstream survivability script', () => {
     expect(report.originUrl).not.toBe(report.upstreamUrl);
     expect(report.upstreamRevision).toBe(git(official, ['rev-parse', 'main']));
     expect(report.patchBytes).toBeGreaterThan(0);
+    expect(report.strategy).toContain('3way');
     expect(report.verified).toBe(false);
   });
 
